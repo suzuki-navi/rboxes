@@ -7,8 +7,6 @@ cd $app_dir
 
 dst="__APP_NAME__"
 main_script="docker/entry.sh"
-cp ../../lib/entry2.sh src/docker/
-cp ../../lib/entry3.sh src/docker/
 
 calc_file_content_hash() {
     local file="$1"

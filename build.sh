@@ -16,11 +16,30 @@ for dir in app/*/; do
             echo "$app_name: Updated build script $app_name/build.sh"
         fi
 
+        if [ -f "app/$app_name/src/docker/entry2.sh" ] && cmp -s "app/$app_name/src/docker/entry2.sh" "lib/entry2.sh" >/dev/null; then
+            :
+        else
+            cp "lib/entry2.sh" "app/$app_name/src/docker/entry2.sh"
+        fi
+
+        if [ -f "app/$app_name/src/docker/entry3.sh" ] && cmp -s "app/$app_name/src/docker/entry3.sh" "lib/entry3.sh" >/dev/null; then
+            :
+        else
+            cp "lib/entry3.sh" "app/$app_name/src/docker/entry3.sh"
+        fi
+
         if [ -f "app/$app_name/src/docker/load-env.sh" ] && cmp -s "app/$app_name/src/docker/load-env.sh" "lib/load-env.sh" >/dev/null; then
             :
         else
             cp "lib/load-env.sh" "app/$app_name/src/docker/load-env.sh"
             echo "$app_name: Copied load-env script to app/$app_name/src/docker/load-env.sh"
+        fi
+
+        if [ -f "app/$app_name/src/docker/write-envs.sh" ] && cmp -s "app/$app_name/src/docker/write-envs.sh" "lib/write-envs.sh" >/dev/null; then
+            :
+        else
+            cp "lib/write-env.sh" "app/$app_name/src/docker/write-env.sh"
+            echo "$app_name: Copied write-env script to app/$app_name/src/docker/write-env.sh"
         fi
 
         gitignore_entries=(
@@ -29,6 +48,7 @@ for dir in app/*/; do
             "/src/docker/entry2.sh"
             "/src/docker/entry3.sh"
             "/src/docker/load-env.sh"
+            "/src/docker/write-env.sh"
         )
         for entry in "${gitignore_entries[@]}"; do
             if [ ! -f "app/$app_name/.gitignore" ] || ! grep -qxF "$entry" "app/$app_name/.gitignore"; then

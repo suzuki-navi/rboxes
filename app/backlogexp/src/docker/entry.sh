@@ -7,10 +7,11 @@ source "$script_dir/parse_args.sh"
 volumes=()
 volumes+=("-v" "$pwd:$pwd")
 
-envs=()
-envs+=("-e" "BACKLOG_SPACE=${BACKLOG_SPACE:-}")
-envs+=("-e" "BACKLOG_API_KEY=${BACKLOG_API_KEY:-}")
-envs+=("-e" "BACKLOG_PROJECT_KEY=${BACKLOG_PROJECT_KEY:-}")
-envs+=("-e" "BACKLOG_SUFFIX=${BACKLOG_SUFFIX:-jp}")
+bash "$script_dir/docker/write-env.sh" "$RXHOME/.rx.env" \
+    BACKLOG_SPACE \
+    BACKLOG_API_KEY \
+    BACKLOG_PROJECT_KEY \
+    BACKLOG_SUFFIX
+    ;
 
-bash "$script_dir/docker/entry2.sh" "${volumes[@]}" "${envs[@]}" -- "${user_args[@]}"
+bash "$script_dir/docker/entry2.sh" "${volumes[@]}" -- "${user_args[@]}"

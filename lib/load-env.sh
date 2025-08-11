@@ -26,7 +26,7 @@ for dir in "${dirs[@]}"; do
         if [ $is_debug -eq 1 ]; then
             echo "Sourced $dir/.rx.env"
         fi
-        break
+        #break
     fi
 done
 set +a
