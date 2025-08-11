@@ -1,0 +1,32 @@
+#!/bin/bash
+
+show_help() {
+    cat << EOF
+Usage: gits [options] [path...]
+
+Display git status in short format.
+
+Options:
+  --help                 display this help message
+
+Arguments:
+  [path...]              one or more paths to show status for (optional)
+EOF
+}
+
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+# Run git status in short format
+git status -s "$@"
