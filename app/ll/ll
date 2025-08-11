@@ -58,6 +58,8 @@ fi
         else
             echo "Error: $path does not exist or is not accessible." >&2
         fi
-        echo
+        if [ ${#PATHS_TO_VIEW[@]} -gt 1 ]; then
+            echo
+        fi
     done
 ) | less -XFR
