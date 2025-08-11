@@ -1,0 +1,63 @@
+#!/bin/bash
+
+show_help() {
+    cat << EOF
+Usage: lls [options] [PATH...]
+
+Options:
+  --help                 display this help message
+
+Arguments:
+  [PATH...]              one or more files or directories to view
+EOF
+}
+
+# Parse command line options
+PATHS_TO_VIEW=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help)
+            show_help
+            exit 0
+            ;;
+        -*)
+            echo "Error: Unknown option $1" >&2
+            show_help >&2
+            exit 1
+            ;;
+        *)
+            PATHS_TO_VIEW+=("$1")
+            shift
+            ;;
+    esac
+done
+
+
+
+export LANG=en_US.UTF-8
+export LESSCHARSET=UTF-8
+
+# If no paths provided, use current directory
+if [ ${#PATHS_TO_VIEW[@]} -eq 0 ]; then
+    PATHS_TO_VIEW=(.)
+fi
+
+(
+    for path in "${PATHS_TO_VIEW[@]}"; do
+        if [ ${#PATHS_TO_VIEW[@]} -gt 1 ]; then
+            echo -e "####################################################################################################"
+            echo -e "# $path"
+            echo -e "####################################################################################################"
+        fi
+
+        if [ -d "$path" ]; then
+            ls -alF --color --time-style="+%Y-%m-%d %H:%M:%S" "$path"
+        elif [ -f "$path" ]; then
+            cat "$path"
+        else
+            echo "Error: $path does not exist or is not accessible." >&2
+        fi
+        echo
+    done
+) | less -XFR
