@@ -1,11 +1,17 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/load-env.sh"
 
-mkdir -p "$pwd/.claude/.rx.home"
+RXHOME="$pwd/var/rx.home"
+mkdir -p "$RXHOME"
+
+if [[ "$pwd" == "$HOME/"* ]]; then
+    RXWORKDIR="$RXHOME/$(realpath --relative-to="$HOME" "$pwd")"
+    mkdir -p "$RXWORKDIR"
+fi
 
 volumes=()
 volumes+=("-v" "$pwd:$pwd")
-volumes+=("-v" "$pwd/.claude/.rx.home:$HOME")
+volumes+=("-v" "$RXHOME:$HOME")
 
 envs=()
 envs+=("-e" "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}")
