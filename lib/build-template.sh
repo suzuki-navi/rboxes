@@ -101,5 +101,5 @@ if [ -f "$dst" ] && cmp -s "$dst" "$dst.tmp" >/dev/null; then
 else
     mv "$dst.tmp" "$dst"
     chmod +x $dst
-    echo "__APP_NAME__: Updated executable $dst"
+    echo "    Updated executable $dst"
 fi
