@@ -1,0 +1,5 @@
+/rselfpack
+/build.sh
+/src/docker/entry2.sh
+/src/docker/entry3.sh
+/src/docker/load-env.sh

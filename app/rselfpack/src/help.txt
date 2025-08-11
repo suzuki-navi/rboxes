@@ -1,0 +1,60 @@
+rselfpack - Self-extracting script generator
+
+DESCRIPTION:
+    Creates self-extracting bash scripts from directories or files.
+    The generated script contains all source files embedded and can be
+    executed on any system with bash to recreate the original file structure.
+
+USAGE:
+    rselfpack [options] [PATH]
+
+OPTIONS:
+    --help              Display this help message and exit
+    --no-compression    Generate script without gzip compression (larger but faster)
+
+ARGUMENTS:
+    [PATH]              Path to directory or file to package.
+                        If not specified, defaults to current directory.
+                        The self-extracting script will be written to stdout.
+
+EXAMPLES:
+    rselfpack /path/to/myproject > myproject.sh
+        Package entire directory into a self-extracting script
+
+    rselfpack --no-compression . > current-dir.sh
+        Package current directory without compression
+
+    rselfpack somefile.txt > somefile.sh
+        Package a single file
+
+    chmod +x myproject.sh && ./myproject.sh
+        Extract files to current directory
+
+    ./myproject.sh /tmp/extract
+        Extract files to specified directory (/tmp/extract)
+
+OUTPUT FORMAT:
+    The generated script contains:
+    - Argument parsing for optional target directory
+    - Base64-encoded file data (compressed by default, unless --no-compression)
+    - Directory creation commands
+    - File extraction commands for both text and binary files
+    - Automatic cleanup of temporary files
+
+FEATURES:
+    - Preserves directory structure
+    - Handles both text and binary files
+    - Automatic binary file detection
+    - Optional gzip compression for efficiency
+    - Deterministic file ordering
+    - Safe heredoc delimiters using content hashes
+    - Optional target directory specification
+
+GENERATED SCRIPT USAGE:
+    ./script.sh                 Extract to current directory
+    ./script.sh /path/to/dir    Extract to specified directory
+
+NOTE:
+    The generated self-extracting script accepts an optional target
+    directory parameter. If not specified, files are extracted to
+    the current working directory.
