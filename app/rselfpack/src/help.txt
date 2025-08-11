@@ -21,7 +21,7 @@ EXAMPLES:
     rselfpack /path/to/myproject > myproject.sh
         Package entire directory into a self-extracting script
 
-    rselfpack --no-compression . > current-dir.sh
+    rselfpack --no-compression . > ../myproject.sh
         Package current directory without compression
 
     rselfpack somefile.txt > somefile.sh

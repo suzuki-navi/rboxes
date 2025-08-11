@@ -18,3 +18,7 @@ for varname in "$@"; do
         printf '%s=%q\n' "$varname" "${!varname}"
     fi
 done > "$outfile"
+
+if [ -n "${RX_VERBOSE:-}" ]; then
+    cat "$outfile"
+fi

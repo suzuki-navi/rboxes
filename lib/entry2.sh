@@ -77,6 +77,8 @@ envs=()
 #volumes+=("-v" "$script_dir:$script_dir")
 #volumes+=("-v" "$pwd:$pwd")
 
+volumes+=("-v" "/var/run/docker.sock:/var/run/docker.sock")
+
 io_opt=()
 temp_file=""
 
