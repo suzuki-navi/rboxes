@@ -17,7 +17,6 @@ backlogexp - Backlogプロジェクトデータエクスポートツール
 環境変数:
     BACKLOG_SPACE       Backlogスペース名（サブドメインのみ、完全なURLではない）
                         例: mycompany.backlog.jp の場合は "mycompany"
-                        .backlog.jp/.backlog.com の場合は ""（空文字列）
     BACKLOG_API_KEY     Backlog APIキー
     BACKLOG_SUFFIX      ドメインサフィックス: "jp" または "com"（デフォルト: "jp"）
 
@@ -47,17 +46,12 @@ backlogexp - Backlogプロジェクトデータエクスポートツール
     export BACKLOG_SPACE="mycompany"
     export BACKLOG_API_KEY="your-api-key-here"
     export BACKLOG_SUFFIX="jp"
-    
-    # https://.backlog.jp の場合:
-    export BACKLOG_SPACE=""
-    export BACKLOG_API_KEY="your-api-key-here"
-    export BACKLOG_SUFFIX="jp"
-    
+
     # https://example.backlog.com の場合:
     export BACKLOG_SPACE="example"
     export BACKLOG_API_KEY="your-api-key-here"
     export BACKLOG_SUFFIX="com"
-    
+
     # エクスポート実行
     backlogexp PROJ
         プロジェクト "PROJ" の全データをカレントディレクトリにエクスポート
@@ -85,12 +79,6 @@ APIキーの取得方法:
     2. 個人設定 > API に移動
     3. 新しいAPIキーを生成
     4. 必要な環境変数を設定
-
-BACKLOG_SPACE形式:
-    - BacklogのURLのサブドメイン部分のみを使用
-    - https://mycompany.backlog.jp → "mycompany" を使用
-    - https://example.backlog.com → "example" を使用
-    - https://.backlog.jp → "" （空文字列）を使用
 
 活用シーン:
     - プロジェクトアーカイブ: 完了したプロジェクトのデータ保存
