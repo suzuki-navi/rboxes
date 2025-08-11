@@ -1,0 +1,29 @@
+#!/bin/bash
+
+show_help() {
+    cat << EOF
+Usage: gitb [options]
+
+Display all branches with verbose information.
+
+Options:
+  --help                 display this help message
+EOF
+}
+
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+# Run git branch with -av option
+git branch -av "$@"
