@@ -1,0 +1,104 @@
+backlogexp - Backlogプロジェクトデータエクスポートツール
+
+概要:
+    プロジェクト管理ツール「Backlog」からプロジェクトデータを一括エクスポートする
+    コマンドラインツールです。Backlog APIを使用して、課題（Issue）やプロジェクト
+    情報を構造化されたファイル形式で取得し、ローカルに保存します。
+
+使用方法:
+    backlogexp [オプション] <プロジェクトキー>
+
+オプション:
+    --help              このヘルプメッセージを表示して終了
+
+引数:
+    プロジェクトキー    Backlogプロジェクトキー（例: "MYPROJ"）
+
+環境変数:
+    BACKLOG_SPACE       Backlogスペース名（サブドメインのみ、完全なURLではない）
+                        例: mycompany.backlog.jp の場合は "mycompany"
+                        .backlog.jp/.backlog.com の場合は ""（空文字列）
+    BACKLOG_API_KEY     Backlog APIキー
+    BACKLOG_SUFFIX      ドメインサフィックス: "jp" または "com"（デフォルト: "jp"）
+
+主な機能:
+    1. プロジェクト情報のエクスポート
+       - プロジェクトの基本情報（ID、キー、名前）をYAML形式で保存
+       - ファイル名: project_{プロジェクトキー}.yml
+
+    2. 課題の個別エクスポート
+       - 各課題を独立したYAMLファイルとして保存
+       - 課題の詳細情報（概要、説明、ステータス、優先度、担当者など）を含む
+       - 全てのコメントも各課題ファイルに統合
+       - ファイル名: {課題キー}_{概要}.yml
+
+    3. 課題一覧表の作成
+       - 全課題の概要をMarkdownテーブル形式で出力
+       - 課題キー、ステータス、作成日、概要の4列で構成
+       - 東アジア文字（日本語等）の文字幅を考慮した美しい表レイアウト
+       - ファイル名: issue_list.md
+
+    4. 自動ドキュメント生成
+       - エクスポート内容を説明するREADME.mdを自動作成
+       - エクスポート日時、件数、ファイル構造などの情報を含む
+
+使用例:
+    # https://mycompany.backlog.jp の場合:
+    export BACKLOG_SPACE="mycompany"
+    export BACKLOG_API_KEY="your-api-key-here"
+    export BACKLOG_SUFFIX="jp"
+    
+    # https://.backlog.jp の場合:
+    export BACKLOG_SPACE=""
+    export BACKLOG_API_KEY="your-api-key-here"
+    export BACKLOG_SUFFIX="jp"
+    
+    # https://example.backlog.com の場合:
+    export BACKLOG_SPACE="example"
+    export BACKLOG_API_KEY="your-api-key-here"
+    export BACKLOG_SUFFIX="com"
+    
+    # エクスポート実行
+    backlogexp PROJ
+        プロジェクト "PROJ" の全データをカレントディレクトリにエクスポート
+
+出力ファイル構造:
+    .
+    ├── README.md                       # エクスポート内容の説明
+    ├── project_MYPROJ.yml              # プロジェクト情報
+    ├── issue_list.md                   # 課題一覧表（Markdown）
+    └── issues/                         # 個別課題ファイル
+        ├── MYPROJ-1_初期セットアップ.yml
+        ├── MYPROJ-2_ログイン機能.yml
+        └── ...
+
+特徴:
+    - 課題の全ての情報（メタデータ、説明、コメント）を保持
+    - ページングを使用して全データを確実に取得
+    - 人間が読みやすいYAML形式
+    - 日本語などの多言語に対応
+    - ファイル名の自動サニタイズ（無効文字の置換）
+    - Docker環境で実行され、システム依存性を最小化
+
+APIキーの取得方法:
+    1. Backlogスペースにログイン
+    2. 個人設定 > API に移動
+    3. 新しいAPIキーを生成
+    4. 必要な環境変数を設定
+
+BACKLOG_SPACE形式:
+    - BacklogのURLのサブドメイン部分のみを使用
+    - https://mycompany.backlog.jp → "mycompany" を使用
+    - https://example.backlog.com → "example" を使用
+    - https://.backlog.jp → "" （空文字列）を使用
+
+活用シーン:
+    - プロジェクトアーカイブ: 完了したプロジェクトのデータ保存
+    - データ移行: 他のプロジェクト管理ツールへの移行準備
+    - レポート作成: プロジェクトの進捗や課題の分析
+    - バックアップ: 重要なプロジェクトデータの定期バックアップ
+    - 監査対応: プロジェクトの履歴や変更記録の提供
+
+注意事項:
+    エクスポートはカレントワーキングディレクトリで実行され、そこにファイルを
+    作成します。書き込み権限と十分なディスク容量があることを確認してください。
