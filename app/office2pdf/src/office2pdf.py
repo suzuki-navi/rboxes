@@ -1,5 +1,4 @@
 import os
-import shutil
 import sys
 import subprocess
 import tempfile
@@ -15,7 +14,6 @@ def main():
 
     file_name = path.split('/')[-1]
     file_name_extension = file_name.rsplit('.', 1)[-1].lower()
-    file_name_without_extension = file_name.rsplit('.', 1)[0]
 
     if file_name_extension not in ['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx']:
         print(f"Unsupported file type: {file_name_extension}")
