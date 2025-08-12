@@ -62,3 +62,5 @@ if [ "$BACKLOG_SUFFIX" != "jp" ] && [ "$BACKLOG_SUFFIX" != "com" ]; then
     echo "Error: BACKLOG_SUFFIX must be 'jp' or 'com'" >&2
     exit 1
 fi
+
+set -- "${user_args[@]}"

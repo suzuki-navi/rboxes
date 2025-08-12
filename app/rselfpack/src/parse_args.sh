@@ -48,3 +48,5 @@ if [ ! -e "$target_path" ]; then
 fi
 
 target_dir_path=$(dirname "$target_path")
+
+set -- "${user_args[@]}"

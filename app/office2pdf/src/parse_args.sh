@@ -40,3 +40,5 @@ while [[ $# -gt 0 ]]; do
 done
 
 source_dir_path=$(dirname "$source_file_path")
+
+set -- "${user_args[@]}"
