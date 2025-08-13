@@ -2,57 +2,62 @@
 
 Enhanced directory listing and file viewing utility
 
-## 概要
+## Overview
+
+A unified tool for displaying directory listings and viewing file contents. It shows detailed file listings for directories and file contents for files, with automatic paging for easy viewing.
 
 ディレクトリリストの表示とファイル内容の閲覧を統合したツールです。ディレクトリの場合は詳細なファイル一覧を、ファイルの場合は内容を表示し、出力をページングして見やすく表示します。
 
-## RBoxes固有の特徴
+## RBoxes-specific Features
 
-- **統合表示**: ディレクトリとファイルを同じコマンドで処理
-- **自動ページング**: 長い出力は自動的に`less`でページング表示
-- **一貫したフォーマット**: ISO形式の日時表示（YYYY-MM-DD HH:MM:SS）
-- **カラー出力**: ファイルタイプに応じた色分け表示
-- **複数パス対応**: 複数のパス指定時は区切り線で分離表示
-- **UTF-8対応**: 日本語ファイル名の適切な表示
+- **Unified display**: Handle both directories and files with the same command
+- **Automatic paging**: Long output is automatically paged with `less`
+- **Multiple path support**: Separate display with dividers for multiple paths
 
-## 使用方法
+## Usage
 
 ```bash
-# 標準的な使用
+# Standard usage
 ll [options] [PATH...]
 ```
 
-### オプション
+### Options
 
-- `--help` - ヘルプメッセージを表示
+- `--help` - Display help message
 
-### 引数
+### Arguments
 
-- `[PATH...]` - 表示する1つ以上のファイルまたはディレクトリ。省略時は現在のディレクトリを表示
+- `[PATH...]` - One or more files or directories to display. Defaults to current directory if omitted
 
-## 動作仕様
+## Operation Specifications
 
-### ディレクトリの場合
+### For Directories
 ```bash
 ll /path/to/directory
-# 実行される内容: ls -alF --color --time-style="+%Y-%m-%d %H:%M:%S"
+# Executed command: ls -alF --color --time-style="+%Y-%m-%d %H:%M:%S"
 ```
 
-### ファイルの場合
+### For Files
 ```bash
 ll file.txt
-# 実行される内容: cat file.txt
+# Executed command: cat file.txt
 ```
 
-### 複数パス指定の場合
+### For Multiple Paths
 ```bash
 ll dir1/ file1.txt dir2/
-# 各パスごとに区切り線を表示して内容を出力
+# Display content with dividers for each path
 ```
 
-## 出力例
+### Utilizing Paging Features
 
-### 単一ディレクトリの表示
+Long directory listings or large file contents are automatically displayed with `less`
+
+長いディレクトリリストや大きなファイル内容は自動的に`less`で表示されます。
+
+## Output Examples
+
+### Single Directory Display
 ```
 $ ll src/
 total 48
@@ -63,7 +68,7 @@ drwxr-xr-x 25 user user  4096 2024-01-15 14:25 ../
 drwxr-xr-x  2 user user  4096 2024-01-15 14:30 utils/
 ```
 
-### 複数パス指定時の表示
+### Multiple Path Display
 ```
 $ ll README.md src/
 ####################################################################################################
@@ -82,48 +87,21 @@ drwxr-xr-x 25 user user 4096 2024-01-15 14:25 ../
 -rw-r--r--  1 user user 1543 2024-01-15 14:30 main.py
 ```
 
-## 技術仕様
+## Technical Specifications
 
-- **実行環境**: 直接実行（非Docker）
-- **ロケール設定**: `LANG=en_US.UTF-8`、`LESSCHARSET=UTF-8`
-- **ページング**: `less -XFR`
-- **日時形式**: ISO形式（YYYY-MM-DD HH:MM:SS）
-- **依存関係**: ls、cat、less（標準的なUnixツール）
+- **Execution environment**: Direct execution (non-Docker)
+- **Dependencies**: ls, cat, less（Standard Unix tools）
 
-## less コマンドのオプション
+## Less Command Options
 
-- `-X`: 終了時に画面をクリアしない
-- `-F`: 内容が1画面に収まる場合は即座に終了
-- `-R`: ANSIカラーエスケープシーケンスを適切に表示
+- `-X`: Don't clear screen on exit
+- `-F`: Quit immediately if content fits on one screen
+- `-R`: Properly display ANSI color escape sequences
 
-## 注意事項
+## Future TODOs
 
-- 大きなファイルを表示する場合、メモリ使用量に注意してください
-- バイナリファイルを指定すると制御文字が表示される場合があります
-- 権限のないファイル・ディレクトリの場合はエラーメッセージを表示
+The following feature improvements are under consideration:
 
-## デバッグ
-
-```bash
-# パスの存在確認
-ll /nonexistent/path  # エラーメッセージを表示
-
-# 権限の確認
-ll /root/  # アクセス権限に応じて表示またはエラー
-```
-
-## 類似コマンドとの比較
-
-| 操作対象 | ll | ls -la | cat |
-|---------|-----|--------|-----|
-| ディレクトリ | 詳細表示 + ページング | 詳細表示のみ | エラー |
-| ファイル | ファイル内容 + ページング | ファイル情報のみ | ファイル内容のみ |
-| 複数パス | 統合表示 | 個別実行が必要 | 結合表示 |
-
-## 今後のTODO
-
-以下の機能改善を検討しています：
-
-- **バイナリファイルの扱いの改善**: 現在はcatで直接表示されるため、バイナリファイルの適切な検出と表示方法の検討
-- **UTF-8以外のエンコーディング対応**: 現在はUTF-8固定のため、他の文字エンコーディングファイルへの対応
-- **シンタックスハイライト機能**: ファイル拡張子に基づく構文ハイライト表示の導入
+- **Improved binary file handling**: Currently displayed directly with cat; considering proper binary file detection and display methods
+- **Support for non-UTF-8 encodings**: Currently fixed to UTF-8; considering support for other character encodings
+- **Syntax highlighting feature**: Introduction of syntax highlighting based on file extensions
