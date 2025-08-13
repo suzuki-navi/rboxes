@@ -44,6 +44,14 @@ for dir in app/*/; do
             echo "    Copied write-env script to app/$app_name/src/docker/write-env.sh"
         fi
 
+        # TODO .rx.env をどう管理するのか課題
+        if [ -f "app/$app_name/src/.rx.env" ] && cmp -s "app/$app_name/src/.rx.env" ".rx.env" >/dev/null; then
+            :
+        else
+            cp ".rx.env" "app/$app_name/src/.rx.env"
+            echo "    Copied .rx.env to app/$app_name/src/.rx.env"
+        fi
+
         gitignore_entries=(
             "/$app_name"
             "/build.sh"

@@ -27,6 +27,10 @@ for dir in "${dirs[@]}"; do
             echo "Sourced $dir/.rx.env"
         fi
         #break
+    else
+        if [ $is_debug -eq 1 ]; then
+            echo "Not found $dir/.rx.env"
+        fi
     fi
 done
 set +a

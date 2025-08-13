@@ -20,5 +20,6 @@ for varname in "$@"; do
 done > "$outfile"
 
 if [ -n "${RX_VERBOSE:-}" ]; then
+    echo "Environment variables written to $outfile"
     cat "$outfile"
 fi
