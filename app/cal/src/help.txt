@@ -1,7 +1,0 @@
-Usage: cal [options] [YEAR]
-
-Options:
-  --help                 display this help message
-
-Arguments:
-  [YEAR]                 year number (1-9999)

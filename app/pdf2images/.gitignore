@@ -4,3 +4,4 @@
 /src/docker/entry3.sh
 /src/docker/load-env.sh
 /src/docker/write-env.sh
+/src/help.txt

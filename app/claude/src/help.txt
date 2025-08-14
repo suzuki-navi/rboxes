@@ -1,5 +1,0 @@
-claude - Claude Code
-
-EXAMPLES:
-    claude --help
-        Show Claude Code help

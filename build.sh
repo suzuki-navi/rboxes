@@ -44,6 +44,13 @@ for dir in app/*/; do
             echo "    Copied write-env script to app/$app_name/src/docker/write-env.sh"
         fi
 
+        if [ -f "app/$app_name/src/help.txt" ] && cmp -s "app/$app_name/src/help.txt" "app/$app_name/README.md" >/dev/null; then
+            :
+        else
+            cp "app/$app_name/README.md" "app/$app_name/src/help.txt"
+            echo "    Copied help text to app/$app_name/src/help.txt"
+        fi
+
         # TODO .rx.env をどう管理するのか課題
         if [ -f "app/$app_name/src/.rx.env" ] && cmp -s "app/$app_name/src/.rx.env" ".rx.env" >/dev/null; then
             :
@@ -59,6 +66,7 @@ for dir in app/*/; do
             "/src/docker/entry3.sh"
             "/src/docker/load-env.sh"
             "/src/docker/write-env.sh"
+            "/src/help.txt"
         )
         for entry in "${gitignore_entries[@]}"; do
             if [ ! -f "app/$app_name/.gitignore" ] || ! grep -qxF "$entry" "app/$app_name/.gitignore"; then
