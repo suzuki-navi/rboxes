@@ -7,7 +7,7 @@ A collection of dockerized command-line utilities packaged as self-extracting ex
 ### Installation
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/suzuki-navi/rboxes.git
 cd rboxes
 
 # Build all tools
@@ -54,7 +54,6 @@ extractmarkdown README.md output/
 ### System Utilities
 - **`cal`** - Calendar utility
 - **`ll`** - Enhanced directory listing
-- **`nkf`** - Network Kanji Filter for character encoding
 - **`rselfpack`** - Self-extracting archive utilities
 
 ## 🚀 Quick Usage Examples
