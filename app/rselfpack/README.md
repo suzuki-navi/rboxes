@@ -2,24 +2,26 @@
 
 Self-extracting script generator
 
-## 概要
+## Overview
 
-ディレクトリやファイルから自己展開型のbashスクリプトを作成するツールです。生成されたスクリプトはすべてのソースファイルを埋め込み、どのシステムでもbashがあれば元のファイル構造を再現できます。
+This tool creates self-extracting bash scripts from directories or files. The generated script embeds all files, allowing the original file structure to be recreated on any system with bash available.
 
-## 使用方法
+ディレクトリやファイルから自己展開型のbashスクリプトを作成するツールです。生成されたスクリプトはすべてのファイルを埋め込み、どのシステムでもbashがあれば元のファイル構造を再現できます。
+
+## Usage
 
 ```bash
 rselfpack [options] [PATH]
 ```
 
-### オプション
+### Options
 
-- `--help` - ヘルプメッセージを表示して終了
-- `--no-compression` - gzip圧縮なしでスクリプトを生成（大きくなるが、生成スクリプトの可読性が向上）
+- `--help` - Display this help message
+- `--no-compression` - Generate script without gzip compression (larger size, but improves readability of generated script)
 
-### 引数
+### Arguments
 
-- `[PATH]` - パッケージ化するディレクトリまたはファイルのパス。未指定の場合は現在のディレクトリを使用。自己展開スクリプトは標準出力に書き出されます
+- `[PATH]` - Path to the directory or file to package. If not specified, the current directory is used. The self-extracting script is written to standard output.
 
 ## 基本的な使用例
 
@@ -57,9 +59,7 @@ chmod +x myproject.sh
 
 ## 生成されるスクリプトの機能
 
-- 引数解析による抽出先ディレクトリの指定
-- ディレクトリ作成コマンド
-- テキスト・バイナリファイル両対応の抽出コマンド
+- 引数解析による展開先ディレクトリの指定
 
 ## 技術仕様
 
