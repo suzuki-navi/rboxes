@@ -18,6 +18,7 @@ while [[ $# -gt 0 ]]; do
         -w|--width)
             if [[ -n $2 && $2 =~ ^[0-9]+$ ]]; then
                 width=$2
+                user_args+=("$1" "$width")
                 shift
             else
                 echo "Error: --width requires a positive integer" >&2
@@ -47,14 +48,5 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
-
-# Add width argument to user_args if not default
-if [ "$width" != "16" ]; then
-    if [[ -n "$input_file" ]]; then
-        user_args=("-w" "$width" "$input_file")
-    else
-        user_args=("-w" "$width")
-    fi
-fi
 
 set -- "${user_args[@]}"

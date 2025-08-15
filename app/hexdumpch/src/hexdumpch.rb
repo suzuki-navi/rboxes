@@ -52,14 +52,21 @@ def decode_to_utf8_safe(data)
           char_bytes = data[i, char_len]
           char = char_bytes.force_encoding('UTF-8')
           if char.valid_encoding?
-            result += char.match?(/[[:print:]]/) && !char.match?(/[[:cntrl:]]/) ? char : '.'
+            if char.match?(/[[:print:]]/) && !char.match?(/[[:cntrl:]]/)
+              result += char
+              i += char_len
+            else
+              result += '.' + ' ' * (char_len - 1)
+              i += char_len
+            end
           else
             result += '.'
+            i += 1
           end
         rescue
           result += '.'
+          i += 1
         end
-        i += char_len
       else
         # 不完全な文字
         result += '.'
