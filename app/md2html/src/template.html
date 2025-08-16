@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>document</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* 全体のフォントとレイアウト */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+/* 見出しのスタイル */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: #2c3e50;
+}
+
+h1 {
+    font-size: 2em;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 0.3em;
+}
+
+h2 {
+    font-size: 1.75em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.2em;
+}
+
+h3 {
+    font-size: 1.5em;
+}
+
+/* リストのスタイル */
+ul, ol {
+    margin: 0.5em 0;
+    padding-left: 2em;
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+/* コードブロックのスタイル */
+pre {
+    background: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+code {
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    background: #f4f4f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    /* color: #e74c3c; */
+}
+
+/* テーブルのスタイル */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* リンクのスタイル */
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* 引用のスタイル */
+blockquote {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid #ddd;
+    background: #f9f9f9;
+    color: #555;
+}
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+
+<!-- Prism.js for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-html.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: false,
+        logLevel: 'info',
+    });
+    document.addEventListener('DOMContentLoaded', async () => {
+        document.querySelectorAll('code.language-mermaid').forEach(code => {
+            const container = document.createElement('div');
+            container.className = 'mermaid';
+            container.textContent = code.textContent; // プレーンテキスト化
+            code.replaceWith(container);
+        });
+        try {
+            await mermaid.run({ querySelector: '.mermaid' });
+        } catch (err) {
+            console.error('Mermaid run() failed:', err);
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('content');
+        const elements = document.querySelectorAll('.mermaid');
+        const zoomables = []
+        for (const element of elements) {
+            zoomables.push(element.parentElement);
+        }
+        for (const zoomable of zoomables) {
+            zoomable.style.overflow = "hidden";
+            zoomable.style.cursor = "grab";
+            zoomable.style.padding = "0";
+
+            const contentDiv = document.createElement('div');
+            contentDiv.style.width = "100%";
+            contentDiv.style.height = "100%";
+            contentDiv.style.transformOrigin = "0 0";
+            while (zoomable.firstChild) {
+                contentDiv.appendChild(zoomable.firstChild);
+            }
+            zoomable.appendChild(contentDiv);
+
+            const zoomableHeight = zoomable.clientHeight;
+            const screenHeight = window.innerHeight;
+
+            let scale = 1;
+            let originX = 0;
+            let originY = 0;
+            let startX = 0;
+            let startY = 0;
+            let isDragging = false;
+
+            zoomable.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                const zoomFactor = 1.1;
+                const rect = zoomable.getBoundingClientRect();
+                const offsetX = event.clientX - rect.left;
+                const offsetY = event.clientY - rect.top;
+                const zoom = event.deltaY > 0 ? 1 / zoomFactor : 1 * zoomFactor;
+
+                const newScale = scale * zoom;
+                const newOriginX = offsetX - (offsetX - originX) / scale * newScale;
+                const newOriginY = offsetY - (offsetY - originY) / scale * newScale;
+
+                scale = newScale;
+                originX = newOriginX;
+                originY = newOriginY;
+
+                updateTransform();
+            });
+            zoomable.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                startX = event.clientX - originX;
+                startY = event.clientY - originY;
+                isDragging = true;
+            });
+
+            document.addEventListener('mousemove', (event) => {
+                if (isDragging) {
+                    originX = event.clientX - startX;
+                    originY = event.clientY - startY;
+                    updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            let oldScale = scale;
+            let oldZoomableHeight = zoomableHeight;
+            function updateTransform() {
+                const newZoomableHeight = (() => {
+                    if (scale <= 1.0) {
+                        return zoomableHeight;
+                    }
+                    return Math.min(zoomableHeight * scale, screenHeight * 0.8);
+                })();
+
+                const deltaY = (newZoomableHeight - oldZoomableHeight) / 2;
+                originY += deltaY;
+
+                zoomable.style.height = `${newZoomableHeight}px`;
+                contentDiv.style.transform = `translate(${originX}px, ${originY}px) scale(${scale})`;
+                container.scrollTop += deltaY;
+
+                oldScale = scale;
+                oldZoomableHeight = newZoomableHeight;
+            }
+        }
+    });
+</script>
+
+</head>
+<body>
+
+<div id='content'>
+{content}
+</div>
+
+</body>
+</html>
