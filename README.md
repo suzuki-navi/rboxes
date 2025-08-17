@@ -2,6 +2,8 @@
 
 A collection of dockerized command-line utilities packaged as self-extracting executables. Each tool runs in its own Docker container, providing consistent execution environments across different systems while remaining easy to distribute and use.
 
+自己展開実行ファイルとしてパッケージ化されたコマンドラインユーティリティのコレクションです。各ツールは独自のDockerコンテナで実行されます。
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -11,7 +13,7 @@ git clone https://github.com/suzuki-navi/rboxes.git
 cd rboxes
 
 # Build all tools
-./build.sh
+bash ./build.sh
 ```
 
 ### Usage
@@ -23,65 +25,6 @@ export PATH="$(pwd)/bin:$PATH"
 
 # Or for permanent setup, add to your shell profile
 echo 'export PATH="$HOME/path/to/rboxes/bin:$PATH"' >> ~/.bashrc
-
-# Now use any tool directly
-backlogexp --help
-office2pdf document.docx  
-extractmarkdown README.md output/
-```
-
-## 📦 Available Tools
-
-### Document Processing
-- **`office2pdf`** - Convert Microsoft Office documents (Word, Excel, PowerPoint) to PDF
-- **`pdf2images`** - Convert PDF documents to PNG images at high resolution
-- **`extractmarkdown`** - Extract files from markdown code blocks with file paths
-
-### Project Management
-- **`backlogexp`** - Export Backlog project data to structured YAML format with comprehensive issue tracking
-
-### Development Utilities
-- **`claude`** - Claude CLI wrapper for AI assistance
-- **`jq`** - JSON processor with Docker isolation
-- **`yq`** - YAML processor with Docker isolation
-
-### Git Utilities
-- **`gita`** - Git add helper
-- **`gitb`** - Git branch utilities
-- **`gitl`** - Git log utilities
-- **`gits`** - Git status utilities
-
-### System Utilities
-- **`cal`** - Calendar utility
-- **`ll`** - Enhanced directory listing
-- **`rselfpack`** - Self-extracting archive utilities
-
-## 🚀 Quick Usage Examples
-
-```bash
-# Document conversion
-office2pdf document.docx        # Office to PDF
-pdf2images report.pdf          # PDF to images
-md2html README.md > index.html  # Markdown to HTML
-
-# Project management
-export BACKLOG_API_KEY="your-key"
-backlogexp PROJECT_KEY         # Export Backlog data
-
-# Development tools
-claude "Explain this code"      # AI assistance
-echo '{"name":"value"}' | jq '.name'  # JSON processing
-
-# Git workflow
-gits                           # Check status
-gita src/                      # Stage changes
-gitb                           # View branches
-gitl | head -10                # Recent commits
-
-# System utilities
-cal 2024                       # View calendar
-ll /path/to/files              # List files
-rselfpack project/ > deploy.sh # Create archive
 ```
 
 ## 🛠️ Development
@@ -96,13 +39,13 @@ rselfpack project/ > deploy.sh # Create archive
 
 #### Build All
 ```bash
-./build.sh
+bash ./build.sh
 ```
 
 #### Build Individual App
 ```bash
 cd app/backlogexp
-./build.sh
+bash ./build.sh
 ```
 
 #### Debug Mode
@@ -137,8 +80,8 @@ src/requirements.txt  # Python
 
 3. **Build and test:**
 ```bash
-../../build.sh  # Generates build.sh automatically
-./build.sh      # Build your app
+bash ../../build.sh  # Generates build.sh automatically
+bash ./build.sh      # Build your app
 ```
 
 ### Directory Structure
