@@ -4,25 +4,33 @@ Document to PDF converter
 
 ## Overview
 
-Converts Microsoft Office documents to PDF format.
+Converts Microsoft Office documents to PDF format using LibreOffice.
 
-Microsoft Officeドキュメント（Word、Excel、PowerPoint）をPDF形式に変換するコマンドラインツールです。
+Microsoft Officeドキュメント（Word、Excel、PowerPoint）をLibreOfficeを使用してPDF形式に変換するコマンドラインツールです。
 
 ## Usage
 
 ```bash
-office2pdf [options] <PATH>
+office2pdf <input_file> -o <output_file_path>      # File output / ファイル出力
+office2pdf <input_file>                            # Auto-determined file output / 自動判定ファイル出力
+office2pdf <input_file> -o @                       # Auto-determined file output / 自動判定ファイル出力
+office2pdf <input_file> -f                         # Force overwrite / 強制上書き
 ```
 
 ### Options
 
-- `--help` - Display this help message
+- `-o, --output <path>` - Output file path or special values / 出力ファイルパスまたは特殊値
+- `-f, --force` - Allow overwriting existing files / 既存ファイルの上書きを許可
+- `--help` - Display this help message / ヘルプメッセージを表示
 
 ### Arguments
 
-- `<PATH>` - Path to the office document to convert to PDF.
-             The output PDF will be created in the same directory
-             with the same filename but with .pdf extension.
+- `<input_file>` - Path to the office document to convert to PDF / PDF変換するOfficeドキュメントのパス
+
+### Special Output Values
+
+- `-o -` - Write to standard output (stdout) / 標準出力に書き込み
+- `-o @` - Auto-determine output file path (adds .pdf to original filename) / 出力ファイルパスを自動判定（元のファイル名に.pdfを追加）
 
 ## Supported Formats
 
@@ -33,23 +41,3 @@ office2pdf [options] <PATH>
 
 ### Output Formats
 - **PDF**: `.pdf`
-
-## Basic Usage Examples
-
-```bash
-office2pdf presentation.pptx
-# converts presentation.pptx to presentation.pptx.pdf
-```
-
-## Output File Naming Convention
-
-The converted PDF file will be created alongside the original file with the original filename plus ".pdf" extension.
-
-- `document.docx` → `document.docx.pdf`
-- `report.xlsx` → `report.xlsx.pdf`
-- `presentation.pptx` → `presentation.pptx.pdf`
-
-## Technical Specifications
-
-- **Conversion Engine**: LibreOffice
-

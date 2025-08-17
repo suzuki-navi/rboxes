@@ -13,14 +13,15 @@ trap 'rm -rf "$temp_dir"' EXIT
 ext="${source_file_path##*.}"
 
 source_file_path2="$temp_dir/target.$ext"
+temp_pdf_path="$temp_dir/target.pdf"
 
 cp "$source_file_path" "$source_file_path2"
 
-python "$script_dir/office2pdf.py" "$source_file_path2"
+perl "$script_dir/office2pdf.pl" "$source_file_path2" "$temp_pdf_path"
 
-pdf_file_path2="${source_file_path2%.*}.pdf"
-pdf_file_path="${source_file_path}.pdf"
-
-if [ -f "$pdf_file_path2" ]; then
-    cp "$pdf_file_path2" "$pdf_file_path"
+if [ ! -f "$temp_pdf_path" ]; then
+    echo "Error: PDF conversion failed" >&2
+    exit 1
 fi
+
+cp "$temp_pdf_path" "$output_file_path"
