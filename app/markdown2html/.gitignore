@@ -3,9 +3,9 @@
 /src/Dockerfile
 /src/requirements.txt
 /src/main.sh
+/src/markdown2html.py
 /src/rdockrun
 /src/help.txt
-/src/backlogexp.py
-/backlogexp
-/src/load-env.sh
-/src/write-env.sh
+/markdown2html
+/src/template.html
+/src/mdlib.js

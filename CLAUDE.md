@@ -4,93 +4,132 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the `rboxes` repository - a collection of dockerized command-line utilities and tools packaged as self-extracting executables. Each tool is designed to run in its own Docker container with consistent build patterns and environment handling.
+This is the `rboxes` repository - a collection of dockerized command-line utilities packaged as self-extracting executables. Each tool runs in its own Docker container, providing consistent execution environments while remaining portable and easy to distribute.
 
 ## Build System
 
-### Main Build Command
-```bash
-./build.sh
-```
-This builds all applications in the `app/` directory and copies executables to `bin/`.
-
-### Individual App Builds
-```bash
-cd app/<app_name>
-./build.sh
-```
-Each app has its own build script generated from `lib/build-template.sh`.
-
-### Build Process
-- Uses `lib/build-template.sh` as a template for individual app build scripts
-- Creates self-extracting executables that bundle the entire Docker context
-- Executables include embedded help text and compressed source code
-- Docker images are built with content-based naming for caching efficiency
-
-## Architecture
-
-### Directory Structure
-```
-app/                    # Individual applications
-├── backlogexp/        # Backlog project export tool (Python)
-├── claude/           # Claude CLI wrapper
-├── extractmarkdown/  # Extract files from markdown code blocks (Perl)
-├── office2pdf/       # Office document to PDF converter (Python + LibreOffice)
-├── pdf2images/       # PDF to images converter (Python)
-├── jq/               # JSON processor wrapper
-├── yq/               # YAML processor wrapper
-└── ...
-
-bin/                   # Built executables
-lib/                   # Shared build scripts and Docker entry points
-```
-
-### Self-Extracting Executable Pattern
-Each app follows this pattern:
-1. Self-extracting shell script contains compressed source code
-2. Runtime extraction to temporary directory
-3. Docker build and run with content-based image naming
-4. Cleanup on exit
-
-### Docker Integration
-- `entry2.sh`: Docker runner with volume mounts and permission handling  
-- `entry3.sh`: Environment loader and main script executor
-- `load-env.sh`: Hierarchical `.rx.env` file loading from filesystem tree
-- `write-env.sh`: Environment variable persistence
-
-## Development Workflow
-
-### Adding New Applications
-1. Create directory in `app/<new_app>/`
-2. Add `src/docker/Dockerfile` 
-3. Add `src/docker/entry.sh` as entry point
-4. Add `src/main.sh` for main logic
-5. Add `src/help.txt` for usage documentation
-6. Run `./build.sh` to generate build script and executable
-
-### Environment Configuration
-- `.rx.env` files provide environment variables
-- Loaded hierarchically from filesystem root to working directory
-- Use `RX_VERBOSE=1` for debug output during builds and execution
-
-### Docker Considerations
-- Images are tagged with content hash for efficient caching
-- Each app runs with current user permissions via `--user` flag
-- Working directory and volumes are preserved in container
-- `/var/run/docker.sock` is mounted for Docker-in-Docker scenarios
-
-## Common Development Commands
-
+### Main Build Commands
 ```bash
 # Build all applications
 ./build.sh
 
-# Build specific application  
-cd app/backlogexp && ./build.sh
+# Run all tests
+./run-tests.sh
 
-# Run with debug output
-RX_VERBOSE=1 ./bin/claude --help
+# Build individual app
+cd app/<app_name>
+./build.sh
+```
 
-# Test self-extraction without Docker
-head -n 100 ./bin/claude  # View embedded help and script structure
+### Build Process Architecture
+The build system uses a sophisticated self-extracting executable pattern:
+
+1. **Source Structure**: Apps define their logic in `src.md` (markdown with embedded code blocks)
+2. **Extraction Phase**: `extractmarkdown` tool extracts code blocks to `src/` directory
+3. **Self-Packing**: `rselfpack` creates self-extracting executables with embedded compressed source
+4. **Runtime**: Executables extract to temp directories and run via Docker with `rdockrun`
+
+### Core Build Components
+- `lib/lib.sh`: Shared build utilities (`smart_cp`, `smart_mv`, `build_app`)
+- `app/extractmarkdown/`: Extracts code blocks from markdown (Perl)
+- `app/rselfpack/`: Creates self-extracting shell scripts (Perl)
+- `app/rdockrun/`: Docker runner with environment and volume handling
+
+## Architecture Patterns
+
+### Self-Extracting Executable Flow
+1. App contains compressed source code and metadata
+2. On execution, extracts to temporary directory
+3. Builds Docker image with content-based hash naming for caching
+4. Runs container with proper volume mounts and user permissions
+5. Cleans up temporary files on exit
+
+### Environment Configuration
+- `.rx.env` files provide hierarchical environment configuration
+- `load-env.sh` loads variables from filesystem root to current directory
+- Variables are scoped to prevent leakage between applications
+
+### Docker Integration
+- Each tool runs isolated in its own container
+- User permissions preserved via `--user` flag
+- Working directory mounted as volume
+- `/var/run/docker.sock` mounted for Docker-in-Docker scenarios
+
+## Directory Structure
+
+```
+app/                    # Individual applications
+├── assemblemarkdown/   # Assembles markdown from multiple files
+├── cal/               # Calendar utility
+├── claude/            # Claude CLI wrapper
+├── dailynote/         # Daily note management (Ruby)
+├── extractmarkdown/   # Extract files from markdown code blocks (Perl)
+├── hexdumpch/         # Hex dump with character display (Ruby)
+├── jq/                # JSON processor wrapper
+├── ll/                # Enhanced ls command
+└── ...
+
+bin/                   # Built self-extracting executables
+lib/                   # Shared build scripts and runtime utilities
+var/                   # Runtime data, old versions, and test data
+```
+
+## Application Development
+
+### Creating New Applications
+
+1. **Create app directory**: `mkdir -p app/myapp`
+
+2. **Create source definition** (`src.md`):
+````markdown
+## Dockerfile
+```text Dockerfile
+FROM ubuntu:22.04
+COPY . /app
+```
+
+## main.sh
+```bash main.sh
+#!/bin/bash
+# Your main application logic
+```
+````
+
+3. **Build**: The build process will:
+   - Extract code blocks to `src/` directory
+   - Copy dependencies and help text
+   - Create self-extracting executable
+
+### Common Application Patterns
+
+Most applications follow this structure:
+- `src/Dockerfile`: Container definition
+- `src/main.sh`: Entry point and argument parsing
+- `src/help.txt`: Usage documentation
+- Language-specific files (`.py`, `.rb`, `.pl`, etc.)
+
+### Testing
+- Individual apps can have `test/` directories with `test.sh` scripts
+- Global test runner: `./run-tests.sh` finds and executes all `test.sh` files
+- Tests should be self-contained and cleanup after themselves
+
+## Runtime Environment
+
+### Volume Mounts
+Applications automatically get:
+- Current working directory mounted at same path
+- User home directory mounted
+- Docker socket for Docker-in-Docker scenarios
+
+### Permissions
+All containers run with current user's UID/GID to maintain file ownership.
+
+## Development Workflow
+
+```bash
+# Typical development cycle
+cd app/myapp
+# Edit src.md file
+bash ./build.sh                    # Builds and packages
+./myapp --help                     # Test the built executable
 ```

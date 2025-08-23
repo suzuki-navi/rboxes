@@ -1,0 +1,320 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use Cwd qw(getcwd abs_path);
+use File::Find qw(find);
+use File::Basename qw(dirname);
+use File::Spec;
+use Digest::SHA qw(sha256_hex);
+use MIME::Base64 qw(encode_base64);
+use Getopt::Long qw(GetOptions);
+use IO::Compress::Gzip;
+
+# ------------------------------
+# Help message function
+sub show_help {
+    my $exit_code = shift || 0;
+    print STDERR <<"END_HELP";
+NAME
+    rselfpack - Create a self-extracting shell script from a directory
+
+SYNOPSIS
+    rselfpack <input_directory> [options]
+
+OPTIONS
+    --compress           Compress the output using gzip
+    -o, --output <file>  Output file name (default: stdout)
+    -x, --execute        Execute main.sh after extraction
+    -h, --help           Show this help message
+
+DESCRIPTION
+    A command-line tool that creates a self-extracting shell script from
+    a directory. The script can be used to recreate the original directory
+    structure and files.
+
+EXAMPLES
+    # Create a self-extracting script from a directory
+    rselfpack ./my-project -o package.sh
+
+    # Create a compressed self-extracting script
+    rselfpack ./my-project --compress -o package.sh
+
+    # Create a self-extracting script that executes main.sh after extraction
+    rselfpack ./my-project -x -o package.sh
+
+    # Output to stdout
+    rselfpack ./my-project > package.sh
+END_HELP
+
+    exit $exit_code;
+}
+
+# Options
+# ------------------------------
+my $use_compress  = 0;
+my $output_file;
+my $help = 0;
+my $execute_main = 0;
+
+GetOptions(
+    'compress!'  => \$use_compress,
+    'output|o=s' => \$output_file,
+    'help|h'     => \$help,
+    'execute|x'  => \$execute_main,
+) or show_help(1);
+
+# Show help if requested
+show_help(0) if $help;
+
+# Validate command line arguments
+if (@ARGV != 1) {
+    print STDERR "Error: Missing input directory\n\n";
+    show_help(1);
+}
+my $target_dir = $ARGV[0];
+
+$target_dir = abs_path($target_dir) or do {
+    print STDERR "Error: input directory not found: $target_dir\n\n";
+    show_help(1);
+};
+
+# Set up output handle (file or STDOUT)
+my $out_fh;
+if (defined $output_file) {
+    open($out_fh, '>:raw', $output_file) or do {
+        print STDERR "Error: cannot open output file '$output_file': $!\n\n";
+        show_help(1);
+    };
+} else {
+    binmode(STDOUT, ':raw');
+    $out_fh = \*STDOUT;
+}
+
+chdir $target_dir or do {
+    print STDERR "Error: cannot change to directory: $target_dir\n\n";
+    show_help(1);
+};
+
+# ------------------------------
+# Utils
+# ------------------------------
+sub calc_file_content_hash {
+    my ($path) = @_;
+    open my $fh, '<:raw', $path or die "Error: cannot open $path: $!";
+    my $ctx;
+    {
+        local $/ = undef;
+        $ctx = <$fh>;
+    }
+    close $fh;
+    my $hex = sha256_hex($ctx // '');
+    return substr($hex, 0, 8);
+}
+
+sub is_binary_file {
+    my ($path) = @_;
+    my $size = -s $path;
+    return 0 unless defined $size; # treat unreadable as text (fail later)
+    open my $fh, '<:raw', $path or die "Error: cannot open $path: $!";
+
+    # 1) control chars 0x00-0x09,0x0B-0x1F imply binary (newline 0x0A excluded)
+    my $buf;
+    while (read($fh, $buf, 8192)) {
+        if ($buf =~ /[\x00-\x09\x0B-\x1F]/) {
+            close $fh;
+            return 1; # binary
+        }
+    }
+
+    # 2) not ending with newline implies binary (if size > 0)
+    if ($size > 0) {
+        seek($fh, -1, 2) or do { close $fh; return 0; };
+        my $last;
+        read($fh, $last, 1);
+        close $fh;
+        return 1 if defined $last && $last ne "\n" && $last ne "";
+    } else {
+        close $fh;
+    }
+    return 0; # text
+}
+
+sub slurp_raw {
+    my ($path) = @_;
+    open my $fh, '<:raw', $path or die "Error: cannot open $path: $!";
+    local $/ = undef;
+    my $s = <$fh>;
+    close $fh;
+    return $s // '';
+}
+
+# Collect files (relative paths, C-like sort)
+my @files;
+find({
+    wanted => sub {
+        return unless -f $_;
+        my $abs  = $File::Find::name;
+        my $rel  = File::Spec->abs2rel($abs, $target_dir);
+        $rel =~ s{^\./}{};
+        push @files, $rel;
+    },
+    no_chdir => 1,
+}, '.');
+
+# Sort in "C" order (bytewise)
+@files = sort { $a cmp $b } @files;
+
+if ($execute_main) {
+    my $has_main = grep { $_ eq 'main.sh' } @files;
+    unless ($has_main) {
+        die "Error: main.sh not found\n";
+    }
+}
+
+# ------------------------------
+# Emit header (usage + file list)
+# ------------------------------
+print $out_fh "#!/bin/bash\n\n";
+if ($execute_main) {
+    my $has_help_txt = grep { $_ eq 'help.txt' } @files;
+    if ($has_help_txt) {
+        my $help_txt = slurp_raw('help.txt');
+        for my $line (split /\r?\n/, $help_txt) {
+            print $out_fh "# $line\n";
+        }
+        print $out_fh "#\n";
+        print $out_fh "\n";
+    }
+} else {
+    print $out_fh "# Self-extracting script generated by rselfpack (Perl)\n";
+    print $out_fh "#\n";
+    print $out_fh "# USAGE:\n";
+    print $out_fh "#   bash ./[this_script_name]                   Extract files to current directory\n";
+    print $out_fh "#   bash ./[this_script_name] [target_dir]      Extract files to specified directory\n";
+    print $out_fh "#\n";
+    print $out_fh "# FILES TO BE EXTRACTED:\n";
+    for my $p (@files) {
+        print $out_fh "#   $p\n";
+    }
+    print $out_fh "\n";
+}
+
+# ------------------------------
+# Emit extraction arg handling (shell snippet)
+# ------------------------------
+#print $out_fh $execute_main ? <<'SHELL_TEMP_BLOCK' : <<'SHELL_ARG_BLOCK';
+if ($execute_main) {
+    print $out_fh <<'SHELL_ARG_BLOCK';
+target_directory=$(mktemp -d)
+trap 'rm -rf "$target_directory"' EXIT
+(
+# Change to target directory
+cd "$target_directory"
+SHELL_ARG_BLOCK
+} else {
+    print $out_fh <<'SHELL_ARG_BLOCK';
+# Parse target directory argument
+target_directory="."
+if [ $# -eq 1 ]; then
+    target_directory="$1"
+    if [ ! -d "$target_directory" ]; then
+        mkdir -p "$target_directory" || {
+            echo "Error: Cannot create directory '$target_directory'" >&2
+            exit 1
+        }
+    fi
+elif [ $# -gt 1 ]; then
+    echo "Error: Too many arguments. Usage: $0 [target_directory]" >&2
+    exit 1
+fi
+# Change to target directory
+cd "$target_directory" || {
+    echo "Error: Cannot change to directory '$target_directory'" >&2
+    exit 1
+}
+SHELL_ARG_BLOCK
+}
+
+# ------------------------------
+# Build per-file payload (shell) that reconstructs files
+# This payload will itself be optionally compressed+base64 and wrapped in a heredoc.
+# ------------------------------
+my $payload = '';
+
+for my $path (@files) {
+    my $dir = dirname($path);
+    if ($dir ne '.' && $dir ne '') {
+        $payload .= sprintf qq{mkdir -p "%s"\n}, $dir;
+    }
+
+    my $hash8 = calc_file_content_hash($path);
+    my $size  = -s $path || 0;
+
+    if ($size == 0) {
+        # empty file
+        $payload .= sprintf qq{echo "" > "%s"\n\n}, $path;
+        next;
+    }
+
+    if (is_binary_file($path)) {
+        # binary => base64
+        my $raw = slurp_raw($path);
+        my $b64 = encode_base64($raw, "");  # no newlines
+        # It's fine to wrap lines for readability; base64 -d will accept either.
+        # Insert newlines every 76 chars like the CLI typically does.
+        $b64 =~ s/(.{1,76})/$1\n/gs;
+
+        $payload .= sprintf qq{base64 -d > "%s" << END_OF_%s\n}, $path, $hash8;
+        $payload .= $b64;
+        $payload .= sprintf qq{END_OF_%s\n\n}, $hash8;
+    } else {
+        # text => plain heredoc
+        my $txt = slurp_raw($path);
+        # Ensure heredoc delimiter is single-quoted to avoid shell expansion
+        $payload .= sprintf qq{cat > "%s" << 'END_OF_%s'\n}, $path, $hash8;
+        $payload .= $txt;
+        # Ensure the content ends with a newline so the delimiter is recognized correctly
+        $payload .= "\n" unless $payload =~ /\n\z/;
+        $payload .= sprintf qq{END_OF_%s\n\n}, $hash8;
+    }
+    if (-x $path) {
+        $payload .= sprintf qq{chmod +x "%s"\n}, $path;
+    }
+}
+
+# ------------------------------
+# Wrap payload: optionally gzip+base64, then emit the runner fragment
+# ------------------------------
+my $payload_hash = substr(sha256_hex($payload), 0, 8);
+
+if ($use_compress) {
+    # gzip + base64 (using system gzip for compatibility/simplicity)
+    # If you prefer pure-Perl, you could use IO::Compress::Gzip.
+    my $gz;
+    IO::Compress::Gzip::gzip(\$payload => \$gz, 
+        Time => 0,      # Set timestamp to 0 for deterministic output
+        Name => '',     # Don't include original filename
+        Comment => ''   # Don't include comment
+    ) or die "Error compressing payload: $!";
+
+    my $b64 = encode_base64($gz, "");
+    $b64 =~ s/(.{1,76})/$1\n/gs;
+
+    printf $out_fh qq{base64 -d << END_OF_%s | gzip -d | bash\n}, $payload_hash;
+    print $out_fh $b64;
+    printf $out_fh qq{END_OF_%s\n}, $payload_hash;
+} else {
+    printf $out_fh qq{cat << 'END_OF_%s' | bash\n}, $payload_hash;
+    print $out_fh $payload;
+    printf $out_fh qq{END_OF_%s\n}, $payload_hash;
+}
+
+if ($execute_main) {
+    print $out_fh ")\n";
+    print $out_fh qq{bash \$target_directory/main.sh "\$@"\n}
+}
+
+# Close the output file handle if it's not STDOUT
+close $out_fh if defined $output_file;
+
+__END__

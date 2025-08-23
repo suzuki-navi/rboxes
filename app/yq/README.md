@@ -13,7 +13,3 @@ YAML processor with Docker isolation
 yq [options] expression [files...]
 echo 'YAML' | yq [options] expression
 ```
-
-## 参考
-
-yqの詳細な使用方法については、[公式ドキュメント](https://mikefarah.gitbook.io/yq/)を参照してください

@@ -31,13 +31,3 @@ dailynote 20250815 -d ~/vault
 dailynote 20250815 -d ~/vault -f
 
 ```
-
-## Features / 機能
-
-- Creates daily note file with weekday and navigation links / 曜日とナビゲーションリンク付きデイリーノートファイルを作成
-- Uses Obsidian WikiLink format (`[[YYYYMMDD]]`) for seamless vault integration / Obsidianボルトとのシームレス統合のためWikiLink形式（`[[YYYYMMDD]]`）を使用
-- Creates monthly index file if it doesn't exist / 存在しない場合は月次インデックスファイルを作成
-- Links to previous/next day and week / 前後の日と週へリンク
-- Links to monthly overview / 月次概要へリンク
-- Supports force overwrite with `-f` flag / `-f`フラグによる強制上書きをサポート
-- Auto-directory creation with `-d @` / `-d @`による自動ディレクトリ作成

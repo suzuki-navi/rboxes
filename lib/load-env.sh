@@ -1,5 +1,5 @@
 
-script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && cd .. && pwd)"
+script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 pwd="$(pwd)"
 is_debug=0
 if [ -n "${RX_VERBOSE:-}" ]; then
@@ -9,11 +9,6 @@ fi
 # Collect all parent directories from root to $pwd
 dirs=()
 parent_dir="$pwd"
-while [ "$parent_dir" != "/" ]; do
-    dirs=("$parent_dir" "${dirs[@]}")
-    parent_dir="$(dirname "$parent_dir")"
-done
-parent_dir="$script_dir"
 while [ "$parent_dir" != "/" ]; do
     dirs=("$parent_dir" "${dirs[@]}")
     parent_dir="$(dirname "$parent_dir")"

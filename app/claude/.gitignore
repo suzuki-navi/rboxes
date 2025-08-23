@@ -1,7 +1,9 @@
-/claude
-/build.sh
-/src/docker/entry2.sh
-/src/docker/entry3.sh
-/src/docker/load-env.sh
-/src/docker/write-env.sh
+/etc/extractmarkdown
+/etc/rselfpack
+/src/Dockerfile
+/src/rdockrun
 /src/help.txt
+/src/main.sh
+/claude
+/src/load-env.sh
+/src/write-env.sh

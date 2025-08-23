@@ -1,0 +1,212 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use File::Find;
+use File::Basename;
+use Getopt::Long;
+
+# Language detection mapping
+my %language_map = (
+    'js'   => 'javascript',
+    'ts'   => 'typescript', 
+    'py'   => 'python',
+    'go'   => 'go',
+    'rs'   => 'rust',
+    'java' => 'java',
+    'c'    => 'c',
+    'cpp'  => 'cpp',
+    'cc'   => 'cpp',
+    'cxx'  => 'cpp',
+    'sh'   => 'bash',
+    'md'   => 'markdown',
+    'json' => 'json',
+    'yaml' => 'yaml',
+    'yml'  => 'yaml',
+    'css'  => 'css',
+    'html' => 'html',
+    'sql'  => 'sql',
+    'php'  => 'php',
+    'rb'   => 'ruby',
+    'pl'   => 'perl',
+    'xml'  => 'xml',
+);
+
+# Help message function
+sub show_help {
+    my $exit_code = shift || 0;
+    
+    print STDERR <<"END_HELP";
+NAME
+    assemblemarkdown - Convert directories and files into a single Markdown document
+
+SYNOPSIS
+    assemblemarkdown [options] <input_directory|file> [output_file]
+
+OPTIONS
+    -o, --output <file>    Output file name
+    -l, --list-files       Output file list in Markdown format first
+    -h, --help             Show this help message
+
+DESCRIPTION
+    A command-line tool that converts directory structures and file contents
+    into a comprehensive Markdown document. Perfect for creating project
+    documentation, tutorials, or sharing code structures.
+
+EXAMPLES
+    # Convert directory to Markdown
+    assemblemarkdown ./my-project -o project.md
+
+    # Include file list at the beginning
+    assemblemarkdown ./src -l -o src-overview.md
+
+    # Output to stdout
+    assemblemarkdown ./project
+END_HELP
+
+    exit $exit_code;
+}
+
+# Parse command line arguments
+my $output_file;
+my $list_files = 0;
+my $help = 0;
+
+GetOptions(
+    'output|o=s'   => \$output_file,
+    'list-files|l' => \$list_files,
+    'help|h'       => \$help,
+) or do {
+    print STDERR "Error: Invalid options\n\n";
+    show_help(1);
+};
+
+show_help(0) if $help;
+
+if (@ARGV == 0) {
+    print STDERR "Error: No input specified.\n\n";
+    show_help(1);
+}
+
+my @inputs = @ARGV;
+
+my $output_fh;
+if ($output_file) {
+    open $output_fh, '>', $output_file or die "Cannot create '$output_file': $!\n";
+} else {
+    $output_fh = \*STDOUT;
+}
+
+# Process inputs
+my @all_files;
+my $base_dir = '';
+
+foreach my $input (@inputs) {
+    if (-d $input) {
+        $base_dir = $input if !$base_dir;
+        find(sub {
+            return if -d $_;
+            return if is_binary_file($_);
+            my $relative_path = $File::Find::name;
+            if (@inputs == 1) {
+                $relative_path =~ s/^\Q$input\E\/?//;
+            }
+            push @all_files, {
+                full_path => $File::Find::name,
+                relative_path => $relative_path,
+                base_dir => $input,
+            };
+        }, $input);
+    } elsif (-f $input) {
+        return if is_binary_file($input);
+        push @all_files, {
+            full_path => $input,
+            relative_path => basename($input),
+            base_dir => dirname($input),
+        };
+    }
+}
+
+# Sort files by path
+@all_files = sort { $a->{relative_path} cmp $b->{relative_path} } @all_files;
+
+# Output file list if requested
+if ($list_files && @all_files) {
+    print $output_fh "## File List\n\n";
+    foreach my $file_info (@all_files) {
+        my $relative_path = $file_info->{relative_path};
+        print $output_fh "- $relative_path\n";
+    }
+    print $output_fh "\n";
+}
+
+# Process files
+if (@all_files) {
+    foreach my $file_info (@all_files) {
+        my $file_path = $file_info->{full_path};
+        my $relative_path = $file_info->{relative_path};
+        
+        print $output_fh "## $relative_path\n\n";
+        
+        # Detect language
+        my $ext = '';
+        if ($relative_path =~ /\.([^.]+)$/) {
+            $ext = lc($1);
+        }
+        my $language = $language_map{$ext} || '';
+        
+        # Read file content
+        open my $fh, '<', $file_path or do {
+            print $output_fh "Error reading file: $!\n\n";
+            next;
+        };
+        my $content = do { local $/; <$fh> };
+        close $fh;
+        
+        # Determine appropriate number of backticks for delimiter
+        my $delimiter = get_markdown_delimiter($content);
+        
+        # Output code block
+        if (!$language) {
+            $language = 'text'; # Default to text if no language detected
+        }
+        print $output_fh "$delimiter$language $relative_path\n";
+        print $output_fh $content;
+        # Ensure content ends with newline for proper markdown formatting
+        print $output_fh "\n" unless $content =~ /\n$/;
+        print $output_fh "$delimiter\n\n";
+    }
+}
+
+close $output_fh if $output_file;
+
+# Subroutines
+
+sub get_markdown_delimiter {
+    my $content = shift;
+    
+    # Find the maximum number of consecutive backticks at the start of any line
+    my $max_backticks = 2; # Start with minimum of 3 backticks
+    
+    while ($content =~ /^(`{3,})/gm) {
+        my $backtick_count = length($1);
+        $max_backticks = $backtick_count if $backtick_count > $max_backticks;
+    }
+    
+    # Return one more than the maximum found, with minimum of 3
+    return '`' x ($max_backticks + 1);
+}
+
+sub is_binary_file {
+    my $file = shift;
+    return 1 unless -f $file;
+    
+    open my $fh, '<', $file or return 1;
+    my $chunk;
+    read $fh, $chunk, 1024;
+    close $fh;
+    
+    return 1 if !defined $chunk || $chunk eq '';
+    return 1 if $chunk =~ /\0/;
+    
+    return 0;
+}

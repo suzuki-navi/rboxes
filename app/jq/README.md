@@ -13,7 +13,3 @@ JSON processor with Docker isolation
 jq [options] filter [files...]
 echo 'JSON' | jq [options] filter
 ```
-
-## 参考
-
-jqの詳細な使用方法については、[公式ドキュメント](https://stedolan.github.io/jq/manual/)を参照してください
