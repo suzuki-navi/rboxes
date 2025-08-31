@@ -95,17 +95,10 @@ set -- "${user_args[@]}"
 
 cd "$output_path"
 
-RXHOME=$(mktemp -d)
-trap 'rm -rf "$RXHOME"' EXIT
-if [[ "$output_path" == "$HOME/"* ]]; then
-    RXWORKDIR="$RXHOME/$(realpath --relative-to="$HOME" "$output_path")"
-    mkdir -p "$RXWORKDIR"
-fi
-volumes+=("-v" "$RXHOME:$HOME")
-
+TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
 source $script_dir/load-env.sh
-
-bash $script_dir/write-env.sh "$RXHOME/.rx.env" \
+bash $script_dir/write-env.sh "$TMP_DIR/.rx.env" \
     BACKLOG_SPACE \
     BACKLOG_API_KEY \
     BACKLOG_SUFFIX \
@@ -135,5 +128,5 @@ if [ "$BACKLOG_SUFFIX" != "jp" ] && [ "$BACKLOG_SUFFIX" != "com" ]; then
     exit 1
 fi
 
-$script_dir/rdockrun "${volumes[@]}" $script_dir python /app/backlogexp.py "$project_key"
+$script_dir/rdockrun "${volumes[@]}" --envfile "$TMP_DIR/.rx.env" $script_dir python /app/backlogexp.py "$project_key"
 ```
