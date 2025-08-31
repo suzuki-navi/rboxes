@@ -2,7 +2,7 @@
 
 # rdockrun: Build-on-the-fly and run docker images from a Dockerfile or directory.
 # Usage:
-#   rdockrun [--debug] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+#   rdockrun [--debug] [--envfile FILEPATH] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 # Examples:
 #   rdockrun Dockerfile ls
 #   rdockrun -v "$(pwd):$(pwd)" foo/ ls -la
@@ -12,14 +12,16 @@ set -euo pipefail
 usage() {
     cat <<'USAGE' >&2
 Usage:
-  rdockrun [-r] [--debug] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+  rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 
 Options:
-  -r         Disable custom ENTRYPOINT for input file handling
-  --debug    Enable debug output
+  -r               Disable custom ENTRYPOINT for input file handling
+  --debug          Enable debug output
+  --envfile PATH   Source environment variables from specified file
+  -e VAR[=VALUE]   Set environment variable (can be used multiple times)
 
 Notes:
-  - Only -r, -v, -p and --debug options are accepted.
+  - Only -r, -v, -p, -e, --envfile and --debug options are accepted.
   - The first non-option argument must be a file or a directory.
   - If a file is given, it is treated as a Dockerfile.
   - If a directory is given, all its contents are copied as the build context.
@@ -33,9 +35,10 @@ err() { echo "ERROR: $*" >&2; exit 1; }
 run_opts=()
 debug=false
 custom_entrypoint=true
+envfile=""
 while (( $# )); do
     case "${1:-}" in
-        -v|-p)
+        -v|-p|-e)
             (( $# >= 2 )) || err "Option $1 requires an argument"
             run_opts+=("$1" "$2")
             shift 2
@@ -48,8 +51,13 @@ while (( $# )); do
             debug=true
             shift
             ;;
+        --envfile)
+            (( $# >= 2 )) || err "Option $1 requires an argument"
+            envfile="$2"
+            shift 2
+            ;;
         --) shift; break ;;
-        -*) err "Unsupported option: $1 (only -r, -v, -p and --debug are allowed)" ;;
+        -*) err "Unsupported option: $1 (only -r, -v, -p, -e, --envfile and --debug are allowed)" ;;
         *) break ;;
     esac
 done
@@ -84,13 +92,11 @@ if $custom_entrypoint; then
     cat <<'EOF' > "$tmpctx/entrypoint.sh"
 input_file="$1"
 shift
-
-if [ -f "$HOME/.rx.env" ]; then
+if [ -e /envfile ]; then
     set -a
-    source "$HOME/.rx.env"
+    . /envfile
     set +a
 fi
-
 if [ -n "$input_file" ]; then
     exec 0< "$input_file"
 fi
@@ -100,7 +106,7 @@ EOF
     # Add ENTRYPOINT in the Dockerfile
     (
         echo "COPY entrypoint.sh /entrypoint.sh"
-        echo "ENTRYPOINT [\"/bin/bash\", \"/entrypoint.sh\"]"
+        echo "ENTRYPOINT [\"/bin/sh\", \"/entrypoint.sh\"]"
     ) >> "$tmpctx/Dockerfile"
 fi
 
@@ -129,7 +135,7 @@ if ! docker image inspect "$imagename" >/dev/null 2>&1; then
         echo "Building image $imagename ..."
     fi
 
-    docker build -t "$imagename" "$tmpctx"
+    docker build -t "$imagename" "$tmpctx" >&2
 else
     if $debug; then
         echo "Image $imagename already exists; skipping build."
@@ -154,6 +160,9 @@ if $custom_entrypoint; then
     fi
     if [ -t 1 ]; then
         run_opts2+=("-t")
+    fi
+    if [[ -n "$envfile" ]]; then
+        run_opts2+=("-v" "$envfile:/envfile")
     fi
 fi
 if [[ -n "$temp_input_file" ]]; then
