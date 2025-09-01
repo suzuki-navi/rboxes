@@ -161,7 +161,7 @@ if $custom_entrypoint; then
     if [ -t 1 ]; then
         run_opts2+=("-t")
     fi
-    if [[ -n "$envfile" ]]; then
+    if [[ -n "$envfile" ]] && [[ -f "$envfile" ]]; then
         run_opts2+=("-v" "$envfile:/envfile")
     fi
 fi
