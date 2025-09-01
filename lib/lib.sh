@@ -73,7 +73,7 @@ smart_mv() {
 
 build_app() {
     local srcdir="$1"
-    local dstdir="$2"
+    local dstdir="${2:-}"
 
     local appname
     appname="$(basename "$srcdir")"
@@ -85,6 +85,8 @@ build_app() {
         }
     fi
 
-    mkdir -p "$dstdir"
-    smart_cp "$srcdir/$appname" "$dstdir/$appname"
+    if [ -n "$dstdir" ]; then
+        mkdir -p "$dstdir"
+        smart_cp "$srcdir/$appname" "$dstdir/$appname"
+    fi
 }
