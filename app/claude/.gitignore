@@ -7,3 +7,6 @@
 /claude
 /src/load-env.sh
 /src/write-env.sh
+/src/chat.md
+/src/suggest-commit-message.md
+/src/claude-auth.sh
