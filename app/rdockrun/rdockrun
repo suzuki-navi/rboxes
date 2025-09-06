@@ -2,7 +2,7 @@
 
 # rdockrun: Build-on-the-fly and run docker images from a Dockerfile or directory.
 # Usage:
-#   rdockrun [--debug] [--envfile FILEPATH] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+#   rdockrun [--debug] [--help] [--envfile FILEPATH] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 # Examples:
 #   rdockrun Dockerfile ls
 #   rdockrun -v "$(pwd):$(pwd)" foo/ ls -la
@@ -12,16 +12,17 @@ set -euo pipefail
 usage() {
     cat <<'USAGE' >&2
 Usage:
-  rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+  rdockrun [-r] [--debug] [--help] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 
 Options:
   -r               Disable custom ENTRYPOINT for input file handling
   --debug          Enable debug output
+  --help           Show this help message and exit
   --envfile PATH   Source environment variables from specified file
   -e VAR[=VALUE]   Set environment variable (can be used multiple times)
 
 Notes:
-  - Only -r, -v, -p, -e, --envfile and --debug options are accepted.
+  - Only -r, -v, -p, -e, --envfile, --help and --debug options are accepted.
   - The first non-option argument must be a file or a directory.
   - If a file is given, it is treated as a Dockerfile.
   - If a directory is given, all its contents are copied as the build context.
@@ -56,8 +57,12 @@ while (( $# )); do
             envfile="$2"
             shift 2
             ;;
+        --help)
+            usage
+            exit 0
+            ;;
         --) shift; break ;;
-        -*) err "Unsupported option: $1 (only -r, -v, -p, -e, --envfile and --debug are allowed)" ;;
+        -*) err "Unsupported option: $1 (only -r, -v, -p, -e, --envfile, --help and --debug are allowed)" ;;
         *) break ;;
     esac
 done
