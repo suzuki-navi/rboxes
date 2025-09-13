@@ -1,4 +1,5 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
+
 use strict;
 use warnings;
 use File::Find;
@@ -201,12 +202,11 @@ sub is_binary_file {
     return 1 unless -f $file;
     
     open my $fh, '<', $file or return 1;
-    my $chunk;
-    read $fh, $chunk, 1024;
+    my $content = do { local $/; <$fh> };
     close $fh;
     
-    return 1 if !defined $chunk || $chunk eq '';
-    return 1 if $chunk =~ /\0/;
+    return 1 if !defined $content || $content eq '';
+    return 1 if $content =~ /\0/;
     
     return 0;
 }
