@@ -50,6 +50,7 @@ if [[ "${CLAUDE_CODE_USE_BEDROCK:-}" == "1" ]]; then
         AWS_ACCESS_KEY_ID \
         AWS_SECRET_ACCESS_KEY \
         AWS_REGION \
+        AWS_BEARER_TOKEN_BEDROCK \
         CLAUDE_CODE_USE_BEDROCK \
         ANTHROPIC_MODEL \
         ;
