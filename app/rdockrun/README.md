@@ -4,9 +4,11 @@ A utility for building and running Docker containers from Dockerfiles or directo
 
 `docker run`の薄いラッパーです。プロジェクトの`package.json`などの依存関係を汚さず、またユーザのグローバル環境を汚さず、再現性の高い実行環境を、**1コマンド**で提供します。
 
-## Overview / 概要
+## Overview
 
 `rdockrun` allows you to quickly run commands inside Docker containers without manually building images. It automatically builds an image from a Dockerfile or directory and executes commands within the resulting container.
+
+## 概要
 
 `rdockrun`を使うと、手動でイメージをビルドすることなく、Dockerコンテナ内でコマンドを素早く実行できます。Dockerfileまたはディレクトリからイメージを自動的にビルドし、結果のコンテナ内でコマンドを実行します。
 
@@ -24,7 +26,7 @@ A utility for building and running Docker containers from Dockerfiles or directo
 rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 ```
 
-### Options / オプション
+### Options
 
 - `-r`: Disable custom ENTRYPOINT for input file handling
 - `--debug`: Enable debug output
@@ -33,6 +35,7 @@ rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:
 - `-v HOST:CONT[:MODE]`: Specify volume mounts (can be used multiple times)
 - `-p HOSTPORT:CONTPORT`: Specify port mappings (can be used multiple times)
 
+### オプション
 
 - `-r`: カスタムENTRYPOINTを無効化（標準入力処理やユーザーマッピングが不要な場合）
 - `--debug`: デバッグ出力を有効化（ビルド状況や実際のdocker runコマンドを表示）
@@ -43,13 +46,15 @@ rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:
 - `-v HOST:CONT[:MODE]`: ボリュームマウント（複数回使用可能）
 - `-p HOSTPORT:CONTPORT`: ポートフォワーディング（複数回使用可能）
 
-## Key Differences from `docker run` / `docker run`との主な違い
+## Key Differences from `docker run`
 
 `rdockrun` is not just a simple wrapper for `docker run`, but provides **build automation and runtime environment adjustment in a single command**:
 
 1. **Combined Build and Execution**: Automatically builds from Dockerfile/directory before execution
 2. **Content-based Image Caching**: Uses content hash for image tags, enabling zero-time rebuilds for unchanged content
 3. **Automatic Environment Setup**: Preserves host UID/GID, working directory, HOME/TZ variables
+
+## `docker run`との主な違い
 
 `rdockrun`は単純な`docker run`のラッパーではなく、**ビルドとランタイム環境の調整をワンコマンド化**している点に意義があります：
 
@@ -58,8 +63,6 @@ rdockrun [-r] [--debug] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:
 3. **自動環境設定**: ホストのUID/GID、作業ディレクトリ、HOME/TZ変数を保持
 
 ## Examples / 使用例
-
-### Basic Usage / 基本的な使用
 
 ```bash
 # Run 'ls' command using a Dockerfile
@@ -77,11 +80,13 @@ rdockrun -v "$(pwd):$(pwd)" foo/ ls -la
 - Bash
 - Standard Unix tools (find, sort, sha256sum)
 
-## Design Goals / 設計目標
+## Design Goals
 
 - **Project Non-invasive**: No impact on local `node_modules` or global environment
 - **Reproducibility**: User ID mapping, default working directory & volumes
 - **Portability**: Linux/Mac/WSL support with minimal dependencies (only `docker` required)
+
+## 設計目標
 
 - **プロジェクト非侵襲**: ローカルの`node_modules`やグローバル環境に影響を与えない
 - **再現性**: ユーザーIDマッピング、既定ワークディレクトリ・ボリューム

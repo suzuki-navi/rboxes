@@ -1,5 +1,5 @@
-#!/bin/bash
-# Usage: write-env.sh output_file VAR1 VAR2 ...
+
+# Usage: bash write-env.sh output_file VAR1 VAR2 ...
 # Writes environment variables to output_file in a safe format for sourcing.
 
 set -eu
@@ -14,7 +14,7 @@ shift
 
 for varname in "$@"; do
     if [ "${!varname+x}" ]; then
-        # 値を安全にエスケープして export 文として出力
+        # Safely escape values and output as export statements
         printf '%s=%q\n' "$varname" "${!varname}"
     fi
 done > "$outfile"
