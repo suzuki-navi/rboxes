@@ -1,0 +1,8 @@
+/etc/extractmarkdown
+/etc/rselfpack
+/src/Dockerfile
+/src/main.sh
+/src/rdockrun
+/aws
+/src/load-env.sh
+/src/write-env.sh

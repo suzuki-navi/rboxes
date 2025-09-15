@@ -45,8 +45,11 @@ This directory contains a collection of dockerized command-line utilities. Each 
 #### Text Processing & Utilities
 - **nkf** - Japanese character encoding conversion tool wrapper
 
-#### AI & Claude Integration
+#### AI
 - **claude** - Claude CLI wrapper
+
+#### Cloud Services
+- **aws** - AWS CLI wrapper with Docker containerization
 
 ## Usage
 
