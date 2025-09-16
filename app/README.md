@@ -47,6 +47,7 @@ This directory contains a collection of dockerized command-line utilities. Each 
 
 #### AI
 - **claude** - Claude CLI wrapper
+- **claude-file** - Claude Code file-specific wrapper
 
 #### Cloud Services
 - **aws** - AWS CLI wrapper with Docker containerization
