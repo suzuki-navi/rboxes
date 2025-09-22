@@ -14,8 +14,6 @@ This directory contains a collection of dockerized command-line utilities. Each 
 - **rdockrun** - Docker runtime environment management tool
 - **rselfpack** - Self-extracting executable creation tool
 
-#### Daily Work Tools
-- **dailynote** - Daily note management tool
 
 #### Document Conversion & PDF Processing
 - **office2pdf** - Convert Microsoft Office files to PDF
@@ -35,6 +33,10 @@ This directory contains a collection of dockerized command-line utilities. Each 
 - **gitb** - Git branch shortcut
 - **gitl** - Git log shortcut
 - **gits** - Git status shortcut
+
+#### Obsidian Vault Tools
+- **dailynote** - Daily note management tool
+- **updatebacklinks** - Automatically manage backlinks between Markdown files
 
 ### Wrapper Tools
 
