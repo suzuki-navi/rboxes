@@ -1,0 +1,10 @@
+/etc/extractmarkdown
+/etc/rselfpack
+/src/Dockerfile
+/src/main.sh
+/src/create-bedrock-api-key.sh
+/src/rdockrun
+/src/help.txt
+/src/load-env.sh
+/src/write-env.sh
+/create-bedrock-api-key
