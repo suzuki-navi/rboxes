@@ -76,15 +76,32 @@ unless File.exist?(monthly_file)
   first_day = Date.new(date.year, date.month, 1)
   last_day = Date.new(date.year, date.month, -1)
   
-  daily_links = []
-  (first_day..last_day).each do |d|
-    daily_links << "- [[#{d.strftime('%Y%m%d')}]]"
+  # Calendar layout starting from Monday (1=Monday, 0=Sunday)
+  # Find Monday of the week containing the first day
+  days_from_monday = (first_day.wday == 0) ? 6 : first_day.wday - 1
+  calendar_start = first_day - days_from_monday
+  
+  # Find Sunday of the week containing the last day
+  days_to_sunday = (last_day.wday == 0) ? 0 : 7 - last_day.wday
+  calendar_end = last_day + days_to_sunday
+  
+  # Generate calendar rows
+  calendar_rows = []
+  current_date = calendar_start
+  
+  while current_date <= calendar_end
+    week_links = []
+    7.times do
+      week_links << "[[#{current_date.strftime('%Y%m%d')}]]"
+      current_date += 1
+    end
+    calendar_rows << week_links.join(' ')
   end
   
   monthly_content = <<~CONTENT
 . [[#{prev_month}]] - #{month_format} - [[#{next_month}]]
 
-#{daily_links.join("\n")}
+#{calendar_rows.join("\n")}
 CONTENT
   
   File.write(monthly_file, monthly_content)
