@@ -7,6 +7,7 @@ RUN apt install -y mandoc less curl unzip
 
 WORKDIR /usr/local
 
+# Install AWS CLI v2
 RUN curl -SsfLk "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscli-exe-linux-x86_64.zip
 RUN unzip awscli-exe-linux-x86_64.zip
 RUN ./aws/install --bin-dir /usr/local/aws/bin/
@@ -22,6 +23,7 @@ pwd=$(pwd)
 
 TMP_DIR=$(mktemp -d)
 CLEANUP_DIRS=("$TMP_DIR")
+trap 'rm -rf "${CLEANUP_DIRS[@]}"' EXIT
 
 volumes=()
 volumes+=("-v" "$pwd:$pwd")
