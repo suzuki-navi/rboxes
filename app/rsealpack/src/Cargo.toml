@@ -1,0 +1,16 @@
+[package]
+name = "rsealpack"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rsealpack"
+path = "src/main.rs"
+
+[dependencies]
+aes-gcm = "0.10"
+scrypt = "0.11"
+base64 = "0.21"
+libc = "0.2"
+sha2 = "0.10"
+which = "6.0"
