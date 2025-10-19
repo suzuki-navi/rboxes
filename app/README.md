@@ -11,9 +11,6 @@ This directory contains a collection of dockerized command-line utilities. Each 
 - **extractmarkdown** - Extract code blocks from markdown files
 - **markdown2html** - Convert Markdown files to HTML
 - **hexdumpch** - Hex dump tool with character display
-- **rdockrun** - Docker runtime environment management tool
-- **rselfpack** - Self-extracting executable creation tool
-
 
 #### Document Conversion & PDF Processing
 - **office2pdf** - Convert Microsoft Office files to PDF
@@ -27,6 +24,11 @@ This directory contains a collection of dockerized command-line utilities. Each 
 
 #### System & File Management
 - **ll** - Enhanced ls command
+
+#### Docker & Packaging Tools
+- **rdockrun** - Docker runtime environment management tool
+- **rselfpack** - Self-extracting executable creation tool
+- **rsealpack** - Secure script packaging tool with AES-256-GCM encryption
 
 #### Git Related Tools
 - **gita** - Git add shortcut
