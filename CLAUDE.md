@@ -74,6 +74,44 @@ lib/                   # Shared build scripts and runtime utilities
 var/                   # Runtime data, old versions, and test data
 ```
 
+## Application Types
+
+The repository contains three main application patterns:
+
+### Type 1: src.md Pattern (11 applications)
+Applications that define their source in `src.md` files and use the standard build process:
+- **aws**: AWS CLI tools
+- **backlogexp**: Backlog export utility (Python)
+- **cal**: Calendar utility
+- **claude-file**: Claude file tool
+- **claude**: Claude CLI wrapper
+- **create-bedrock-api-key**: AWS Bedrock API key generator
+- **dailynote**: Daily note management (Ruby)
+- **hexdumpch**: Hex dump with character display (Ruby)
+- **jq**: JSON processor wrapper
+- **markdown2html**: Markdown to HTML converter (Python)
+- **nkf**: Network Kanji Filter
+- **office2pdf**: Office to PDF converter (Perl)
+- **pdf2images**: PDF to images converter (Python)
+- **yq**: YAML processor
+
+### Type 2: Direct Executable Pattern (9 applications)
+Applications where the executable is directly managed in git:
+- **assemblemarkdown**: Markdown assembler
+- **extractmarkdown**: Markdown code block extractor
+- **gita**: Git add tool
+- **gitb**: Git branch tool
+- **gitl**: Git log tool
+- **gits**: Git status tool
+- **ll**: Enhanced ls command
+- **rdockrun**: Docker runner
+- **rselfpack**: Self-packing tool
+
+### Type 3: Custom Configuration (2 applications)
+Applications with unique build patterns:
+- **rsealpack**: Secure script packaging tool (Rust + wrapper scripts)
+- **updatebacklinks**: Backlink updater (Perl source file directly managed)
+
 ## Application Development
 
 ### Creating New Applications
