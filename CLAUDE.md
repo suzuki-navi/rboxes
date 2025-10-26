@@ -78,9 +78,10 @@ var/                   # Runtime data, old versions, and test data
 
 The repository contains three main application patterns:
 
-### Type 1: src.md Pattern (11 applications)
+### Type 1: src.md Pattern (12 applications)
 Applications that define their source in `src.md` files and use the standard build process:
 - **aws**: AWS CLI tools
+- **aws-list-subnets**: AWS subnet listing tool
 - **backlogexp**: Backlog export utility (Python)
 - **cal**: Calendar utility
 - **claude-file**: Claude file tool
