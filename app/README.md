@@ -56,6 +56,7 @@ This directory contains a collection of dockerized command-line utilities. Each 
 #### Cloud Services
 - **aws** - AWS CLI wrapper with Docker containerization
 - **aws-list-subnets** - AWS subnet listing tool
+- **awsdac** - AWS Diagram as Code tool for generating AWS architecture diagrams
 
 ## Usage
 

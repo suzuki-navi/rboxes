@@ -60,6 +60,7 @@ The build system uses a sophisticated self-extracting executable pattern:
 ```
 app/                    # Individual applications
 ├── assemblemarkdown/   # Assembles markdown from multiple files
+├── awsdac/            # AWS Diagram as Code tool
 ├── cal/               # Calendar utility
 ├── claude/            # Claude CLI wrapper
 ├── dailynote/         # Daily note management (Ruby)
@@ -78,10 +79,11 @@ var/                   # Runtime data, old versions, and test data
 
 The repository contains three main application patterns:
 
-### Type 1: src.md Pattern (12 applications)
+### Type 1: src.md Pattern (13 applications)
 Applications that define their source in `src.md` files and use the standard build process:
 - **aws**: AWS CLI tools
 - **aws-list-subnets**: AWS subnet listing tool
+- **awsdac**: AWS Diagram as Code tool for generating architecture diagrams
 - **backlogexp**: Backlog export utility (Python)
 - **cal**: Calendar utility
 - **claude-file**: Claude file tool
