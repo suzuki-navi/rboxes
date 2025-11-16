@@ -139,25 +139,21 @@ cp "$script_dir/Cargo.lock" "$tmp_dir/rsealpack/"
     volumes=()
     volumes+=("-v" "$tmp_dir:$tmp_dir")
     cd "$tmp_dir/rsealpack"
-    $script_dir/rdockrun "${volumes[@]}" "$script_dir/Dockerfile" cargo build --release
+    $script_dir/rdockrun "${volumes[@]}" "$script_dir" bash /app/rsealpack/src/main-sub.sh "$tmp_dir/rsealpacked"
 )
-
-if $is_debug; then
-    cp -r "$tmp_dir/rsealpack" "$pwd/rsealpack-debug-$(date +%Y%m%d_%H%M%S)"
-fi
 
 # バイナリのみオプションが指定された場合はバイナリのみ出力
 if $binary; then
-    cp "$tmp_dir/rsealpack/target/release/rsealpack" "$output_path"
+    cp "$tmp_dir/rsealpacked" "$output_path"
 else
     # デフォルトではラッパースクリプトを生成
     # 入力ファイルの拡張子と元のファイル名を取得
     input_ext="${input_path##*.}"
 
     if [ "$binname" = "perl" ]; then
-        bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpack/target/release/rsealpack" "$output_path"
+        bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
     elif [ "$binname" = "bash" ] || [ "$binname" = "sh" ]; then
-        bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpack/target/release/rsealpack" "$output_path"
+        bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
     else
         echo "Error: Unsupported binname for wrapper generation: $binname" >&2
         exit 1

@@ -8,6 +8,7 @@ source $project_dir/../../lib/lib.sh
 
 ########
 
+echo "Testing rsealpack #1a"
 $project_dir/rsealpack ./sample.pl -o ./sample.pl.bin --image debian:bookworm --binname perl -f --binary
 add_gitignore /sample.pl.bin
 
@@ -16,6 +17,7 @@ add_gitignore /actual-perl-bin.txt
 
 diff -u expected.txt actual-perl-bin.txt
 
+echo "Testing rsealpack #1b"
 $project_dir/rsealpack ./sample.pl -o ./sample.pl.bin.pl --image debian:bookworm --binname perl -f
 add_gitignore /sample.pl.bin.pl
 
@@ -26,6 +28,7 @@ diff -u expected.txt actual-perl-script.txt
 
 ########
 
+echo "Testing rsealpack #2a"
 $project_dir/rsealpack ./sample.sh -o ./sample.sh.bin --image debian:bookworm --binname bash -f --binary
 add_gitignore /sample.sh.bin
 
@@ -34,6 +37,7 @@ add_gitignore /actual-bash-bin.txt
 
 diff -u expected.txt actual-bash-bin.txt
 
+echo "Testing rsealpack #2b"
 $project_dir/rsealpack ./sample.sh -o ./sample.sh.bin.sh --image debian:bookworm --binname bash -f
 add_gitignore /sample.sh.bin.sh
 
