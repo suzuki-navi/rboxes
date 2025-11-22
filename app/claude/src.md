@@ -71,3 +71,17 @@ Please also record the AI's response in the above file and save it as part of th
 ```markdown suggest-commit-message.md
 Check the staged changes in Git and come up with a commit message.
 ```
+
+## rename-file.md
+
+```markdown rename-file.md
+Please rename the file `$ARGUMENTS` to an appropriate filename based on its content. Analyze the file content and suggest a descriptive and meaningful filename that reflects what the file contains or its purpose.
+
+Also examine other files in the same directory and workspace to understand the existing naming conventions and patterns. Consider factors such as:
+- File naming patterns used by similar files in the project
+- Consistent use of separators (dashes, underscores, etc.)
+- Naming style (camelCase, snake_case, kebab-case, etc.)
+- Common prefixes or suffixes used in the project
+
+After deciding on the new filename that follows the project's naming conventions, please perform the actual file rename operation.
+```
