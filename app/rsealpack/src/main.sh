@@ -16,7 +16,6 @@ input_path=""
 output_path=""
 force_overwrite=false
 is_debug=false
-binary=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -57,10 +56,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --debug)
             is_debug=true
-            shift
-            ;;
-        --binary)
-            binary=true
             shift
             ;;
         -*)
@@ -142,20 +137,14 @@ cp "$script_dir/Cargo.lock" "$tmp_dir/rsealpack/"
     $script_dir/rdockrun "${volumes[@]}" "$script_dir" bash /app/rsealpack/src/main-sub.sh "$tmp_dir/rsealpacked"
 )
 
-# バイナリのみオプションが指定された場合はバイナリのみ出力
-if $binary; then
-    cp "$tmp_dir/rsealpacked" "$output_path"
-else
-    # デフォルトではラッパースクリプトを生成
-    # 入力ファイルの拡張子と元のファイル名を取得
-    input_ext="${input_path##*.}"
+# 入力ファイルの拡張子と元のファイル名を取得
+input_ext="${input_path##*.}"
 
-    if [ "$binname" = "perl" ]; then
-        bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
-    elif [ "$binname" = "bash" ] || [ "$binname" = "sh" ]; then
-        bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
-    else
-        echo "Error: Unsupported binname for wrapper generation: $binname" >&2
-        exit 1
-    fi
+if [ "$binname" = "perl" ]; then
+    bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
+elif [ "$binname" = "bash" ] || [ "$binname" = "sh" ]; then
+    bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
+else
+    echo "Error: Unsupported binname for wrapper generation: $binname" >&2
+    exit 1
 fi
