@@ -157,7 +157,9 @@ if $custom_entrypoint; then
     run_opts2+=("--user" "${uid}:${gid}")
     run_opts2+=("-w" "$pwd")
     run_opts2+=("-e" "HOME=$HOME")
-    run_opts2+=("-e" "TZ=$TZ")
+    if [[ -n "${TZ:-}" ]]; then
+        run_opts2+=("-e" "TZ=$TZ")
+    fi
     if [ -t 0 ]; then
         run_opts2+=("-i")
     else
