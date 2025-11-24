@@ -4,8 +4,6 @@ set -e
 script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 pwd=$(pwd)
 
-volumes=()
-
 show_help() {
     cat $script_dir/help.txt
 }
@@ -115,12 +113,25 @@ fetch_expected_option() {
 
 option=$(fetch_expected_option)
 
+# Calculate hash of all files in rsealpack directory
+current_hash=$( (echo $option; cat $input_path; cat $script_dir/rsealpack) | sha256sum | awk '{print $1}')
+short_hash="${current_hash:0:8}"
+
+# Check if output file exists and extract existing hash
+existing_hash=""
+if [[ -f "$output_path" ]]; then
+    existing_hash=$(head -n 2 "$output_path" | grep -o '##:[0-9a-f]\{8\}' | sed 's/##://' | head -1)
+fi
+
+# Skip processing if hashes match
+if [[ -n "$existing_hash" ]] && [[ "$existing_hash" == "$short_hash" ]]; then
+    exit 0
+fi
+
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
 
 mkdir -p $tmp_dir/rsealpack/src
-
-volumes+=("-v" "$output_path:$output_path")
 
 $script_dir/rsealpack \
     $option \
@@ -141,9 +152,9 @@ cp "$script_dir/Cargo.lock" "$tmp_dir/rsealpack/"
 input_ext="${input_path##*.}"
 
 if [ "$binname" = "perl" ]; then
-    bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
+    bash "$script_dir/wrappers/perl_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path" "$short_hash"
 elif [ "$binname" = "bash" ] || [ "$binname" = "sh" ]; then
-    bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path"
+    bash "$script_dir/wrappers/bash_wrapper.sh" "$tmp_dir/rsealpacked" "$output_path" "$short_hash"
 else
     echo "Error: Unsupported binname for wrapper generation: $binname" >&2
     exit 1

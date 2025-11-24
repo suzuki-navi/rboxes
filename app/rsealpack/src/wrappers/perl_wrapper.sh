@@ -4,13 +4,14 @@
 
 set -e
 
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <binary_path> <output_path>" >&2
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <binary_path> <output_path> <hash>" >&2
     exit 1
 fi
 
 binary_path="$1"
 output_path="$2"
+hash="$3"
 
 if [ ! -f "$binary_path" ]; then
     echo "Error: Binary file not found: $binary_path" >&2
@@ -22,6 +23,8 @@ binary_b64=$(gzip -c "$binary_path" | base64 -w 76)
 
 # Perlスクリプトを生成
 cat > "$output_path" << EOF
+##:$hash
+# rsealpack generated script
 use strict;
 use warnings;
 use File::Temp qw/tempfile tempdir/;
