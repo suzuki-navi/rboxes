@@ -108,7 +108,7 @@ def to_html(source_path, output_path=None, force_overwrite=False):
         
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html)
-        print(f"Converted to {output_file}")
+        #print(f"Converted to {output_file}")
     else:
         # 標準出力に出力（従来の動作）
         sys.stdout.write(html)
