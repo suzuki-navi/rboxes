@@ -216,7 +216,7 @@ sub format_size {
     } elsif ($value >= 10) {
         return sprintf("%4.1f %-2s", $value, $unit);
     } else {
-        return sprintf("%5.2f %-2s", $value, $unit);
+        return sprintf("%4.2f %-2s", $value, $unit);
     }
 }
 
@@ -408,10 +408,10 @@ sub format_directory_output {
         my $percent = $entry_data->{percent} // 0;  # Use pre-calculated percentage
 
         if ($entry_data->{is_dir}) {
-            printf("        %-*s  %10s  %3d%%  %d files\n",
+            printf("        %-*s  %7s  %3d%%  %d files\n",
                    $max_full_path_length, "$full_path/", $size, $percent, $entry_data->{count});
         } else {
-            printf("        %-*s  %10s  %3d%%\n",
+            printf("        %-*s  %7s  %3d%%\n",
                     $max_full_path_length, $full_path, $size, $percent);
         }
     }
@@ -441,7 +441,7 @@ sub format_directory_output {
             my $ext_data = $data->{extensions}{$ext};
             my $size = format_size($ext_data->{size});
             my $percent = $ext_data->{percent} // 0;  # Use pre-calculated percentage
-            printf("        %-*s  %10s  %3d%%  %d files\n",
+            printf("        %-*s  %7s  %3d%%  %d files\n",
                    $MIN_FULL_PATH_LENGTH, $ext, $size, $percent, $ext_data->{count});
         }
 
