@@ -324,8 +324,8 @@ sub identify_large_dirs {
 
     my $threshold = $parent_size * ($threshold_percent / 100);
 
-    # Check each subdirectory
-    foreach my $entry (keys %{$data->{entries}}) {
+    # Check each subdirectory, sorted by size descending
+    foreach my $entry (sort { $data->{entries}{$b}{size} <=> $data->{entries}{$a}{size} } keys %{$data->{entries}}) {
         my $entry_data = $data->{entries}{$entry};
 
         if ($entry_data->{is_dir} && $entry_data->{size} >= $threshold) {
