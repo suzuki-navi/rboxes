@@ -12,6 +12,8 @@ my $original_target_dir;  # Store original path format (relative or absolute)
 my $threshold_percent = 25;
 my $respect_gitignore = 0;
 my %gitignore_cache;  # Cache for parsed .gitignore files
+my $max_entries = 10;     # Maximum entries to display (0 = all)
+my $max_extensions = 10;  # Maximum extensions to display (0 = all)
 
 # Parse arguments
 sub show_help {
@@ -22,6 +24,8 @@ Summarizes directory sizes with recursive breakdown of large subdirectories.
 
 Options:
     --threshold-percent N  Size threshold percentage for expanding subdirectories (default: 25)
+    --max-entries N        Maximum number of entries to display per directory (default: 10, 0 = all)
+    --max-extensions N     Maximum number of extensions to display per directory (default: 10, 0 = all)
     --gitignore            Skip files and directories matching .gitignore patterns
     -h, --help            Show this help message
 
@@ -32,7 +36,8 @@ Examples:
     summarize-directory-size
     summarize-directory-size /path/to/dir
     summarize-directory-size --threshold-percent 30 /path/to/dir
-    summarize-directory-size /path/to/dir --threshold-percent 10
+    summarize-directory-size --max-entries 5 /path/to/dir
+    summarize-directory-size --max-entries 0 --max-extensions 0 /path/to/dir
 
 The tool will recursively expand subdirectories that are >= threshold percentage of their parent.
 EOF
@@ -48,6 +53,12 @@ while (@ARGV) {
     } elsif ($arg eq '--threshold-percent') {
         die "Error: --threshold-percent requires a value\n" unless @ARGV;
         $threshold_percent = shift @ARGV;
+    } elsif ($arg eq '--max-entries') {
+        die "Error: --max-entries requires a value\n" unless @ARGV;
+        $max_entries = shift @ARGV;
+    } elsif ($arg eq '--max-extensions') {
+        die "Error: --max-extensions requires a value\n" unless @ARGV;
+        $max_extensions = shift @ARGV;
     } elsif ($arg eq '--gitignore') {
         $respect_gitignore = 1;
     } elsif ($arg =~ /^--/) {
@@ -55,6 +66,7 @@ while (@ARGV) {
     } else {
         # It's a positional argument (directory)
         $target_dir = $arg;
+        $target_dir =~ s/\/$//;  # Remove trailing slash
     }
 }
 
@@ -65,6 +77,10 @@ $target_dir = abs_path($target_dir);
 die "Error: Directory '$target_dir' does not exist\n" unless -d $target_dir;
 die "Error: Threshold must be a number between 0 and 100\n"
     unless $threshold_percent =~ /^\d+$/ && $threshold_percent >= 0 && $threshold_percent <= 100;
+die "Error: --max-entries must be a non-negative integer\n"
+    unless $max_entries =~ /^\d+$/;
+die "Error: --max-extensions must be a non-negative integer\n"
+    unless $max_extensions =~ /^\d+$/;
 
 # Parse .gitignore file and return array of patterns
 sub parse_gitignore {
@@ -367,7 +383,15 @@ sub format_directory_output {
         $data->{entries}{$b}{size} <=> $data->{entries}{$a}{size}
     } keys %{$data->{entries}};
 
-    foreach my $entry (@sorted_entries) {
+    # Apply limit
+    my $entries_to_show = $max_entries > 0 ? $max_entries : scalar(@sorted_entries);
+    $entries_to_show = scalar(@sorted_entries) if $entries_to_show > scalar(@sorted_entries);
+
+    my $total_entries = scalar(@sorted_entries);
+    my $is_truncated = ($max_entries > 0 && $total_entries > $max_entries);
+
+    for (my $i = 0; $i < $entries_to_show; $i++) {
+        my $entry = $sorted_entries[$i];
         my $entry_data = $data->{entries}{$entry};
         my $full_path = convert_to_display_path($entry_data->{path});
         my $size = format_size($entry_data->{size});
@@ -380,6 +404,10 @@ sub format_directory_output {
         }
     }
 
+    if ($is_truncated) {
+        printf("        %-50s\n", "...");
+    }
+
     # Print extensions section
     if (keys %{$data->{extensions}}) {
         print "    Extensions:\n";
@@ -389,11 +417,23 @@ sub format_directory_output {
             $data->{extensions}{$b}{size} <=> $data->{extensions}{$a}{size}
         } keys %{$data->{extensions}};
 
-        foreach my $ext (@sorted_exts) {
+        # Apply limit
+        my $exts_to_show = $max_extensions > 0 ? $max_extensions : scalar(@sorted_exts);
+        $exts_to_show = scalar(@sorted_exts) if $exts_to_show > scalar(@sorted_exts);
+
+        my $total_exts = scalar(@sorted_exts);
+        my $is_ext_truncated = ($max_extensions > 0 && $total_exts > $max_extensions);
+
+        for (my $i = 0; $i < $exts_to_show; $i++) {
+            my $ext = $sorted_exts[$i];
             my $ext_data = $data->{extensions}{$ext};
             my $size = format_size($ext_data->{size});
             printf("        %-20s %10s  %d files\n",
                    $ext, $size, $ext_data->{count});
+        }
+
+        if ($is_ext_truncated) {
+            printf("        %-20s\n", "...");
         }
     }
 }
