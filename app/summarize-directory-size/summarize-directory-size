@@ -174,14 +174,34 @@ sub is_gitignored {
     return $ignored;
 }
 
-# Format size in human-readable format
+# Format size in human-readable format with right alignment
 sub format_size {
     my ($bytes) = @_;
 
-    return sprintf("%.0f B", $bytes) if $bytes < 1024;
-    return sprintf("%.1f KB", $bytes/1024) if $bytes < 1024*1024;
-    return sprintf("%.1f MB", $bytes/(1024*1024)) if $bytes < 1024*1024*1024;
-    return sprintf("%.1f GB", $bytes/(1024*1024*1024));
+    my ($value, $unit);
+
+    if ($bytes < 1024) {
+        $value = $bytes;
+        $unit = "B";
+    } elsif ($bytes < 1024*1024) {
+        $value = $bytes / 1024;
+        $unit = "KB";
+    } elsif ($bytes < 1024*1024*1024) {
+        $value = $bytes / (1024*1024);
+        $unit = "MB";
+    } else {
+        $value = $bytes / (1024*1024*1024);
+        $unit = "GB";
+    }
+
+    # Format with appropriate precision and width for alignment
+    if ($value >= 100) {
+        return sprintf("%3.0f %-2s", $value, $unit);
+    } elsif ($value >= 10) {
+        return sprintf("%4.1f %-2s", $value, $unit);
+    } else {
+        return sprintf("%5.2f %-2s", $value, $unit);
+    }
 }
 
 # Scan directory tree and collect size information
