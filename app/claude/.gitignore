@@ -7,7 +7,7 @@
 /claude
 /src/load-env.sh
 /src/write-env.sh
-/src/chat.md
 /src/claude-auth.sh
+/src/chat.md
 /src/git-commit.md
 /src/rename.md
