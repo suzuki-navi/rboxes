@@ -367,6 +367,8 @@ sub format_directory_output {
     my $total_entries = scalar(@sorted_entries);
     my $is_truncated = ($max_entries > 0 && $total_entries > $max_entries);
 
+    my $MIN_FULL_PATH_LENGTH = 16;
+
     my $max_full_path_length = 0;
     for (my $i = 0; $i < $entries_to_show; $i++) {
         my $entry = $sorted_entries[$i];
@@ -375,6 +377,7 @@ sub format_directory_output {
         my $length = length($full_path) + ($entry_data->{is_dir} ? 1 : 0);
         $max_full_path_length = $length if $length > $max_full_path_length;
     }
+    $max_full_path_length = $MIN_FULL_PATH_LENGTH if $max_full_path_length < $MIN_FULL_PATH_LENGTH;
 
     for (my $i = 0; $i < $entries_to_show; $i++) {
         my $entry = $sorted_entries[$i];
@@ -384,16 +387,16 @@ sub format_directory_output {
         my $percent = $root_total_size > 0 ? int(($entry_data->{size} / $root_total_size) * 100) : 0;
 
         if ($entry_data->{is_dir}) {
-            printf("        %-*s %10s  %3d%%  %d files\n",
+            printf("        %-*s  %10s  %3d%%  %d files\n",
                    $max_full_path_length, "$full_path/", $size, $percent, $entry_data->{count});
         } else {
-            printf("        %-*s %10s  %3d%%\n",
+            printf("        %-*s  %10s  %3d%%\n",
                     $max_full_path_length, $full_path, $size, $percent);
         }
     }
 
     if ($is_truncated) {
-        printf("        %-50s\n", "...");
+        printf("        %-*s\n", $max_full_path_length, "...");
     }
 
     # Print extensions section
@@ -417,12 +420,12 @@ sub format_directory_output {
             my $ext_data = $data->{extensions}{$ext};
             my $size = format_size($ext_data->{size});
             my $percent = $root_total_size > 0 ? int(($ext_data->{size} / $root_total_size) * 100) : 0;
-            printf("        %-20s %10s  %3d%%  %d files\n",
-                   $ext, $size, $percent, $ext_data->{count});
+            printf("        %-*s  %10s  %3d%%  %d files\n",
+                   $MIN_FULL_PATH_LENGTH, $ext, $size, $percent, $ext_data->{count});
         }
 
         if ($is_ext_truncated) {
-            printf("        %-20s\n", "...");
+            printf("        %-*s\n", $MIN_FULL_PATH_LENGTH, "...");
         }
     }
 }
