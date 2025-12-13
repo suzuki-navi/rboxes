@@ -24,6 +24,7 @@ This directory contains a collection of dockerized command-line utilities. Each 
 
 #### System & File Management
 - **ll** - Enhanced ls command
+- **summarize-directory-size** - Recursively analyzes and summarizes directory sizes with breakdown of large subdirectories
 
 #### Docker & Packaging Tools
 - **rdockrun** - Docker runtime environment management tool
