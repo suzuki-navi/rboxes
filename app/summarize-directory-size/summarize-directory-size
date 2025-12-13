@@ -10,7 +10,7 @@ my %dir_data;
 my $target_dir;
 my $original_target_dir;  # Store original path format (relative or absolute)
 my $threshold_percent = 25;
-my $respect_gitignore = 0;
+my $respect_gitignore = 1;  # Default: respect .gitignore
 my %gitignore_cache;  # Cache for parsed .gitignore files
 my $max_entries = 10;     # Maximum entries to display (0 = all)
 my $max_extensions = 10;  # Maximum extensions to display (0 = all)
@@ -26,7 +26,7 @@ Options:
     --threshold-percent N  Size threshold percentage for expanding subdirectories (default: 25)
     --max-entries N        Maximum number of entries to display per directory (default: 10, 0 = all)
     --max-extensions N     Maximum number of extensions to display per directory (default: 10, 0 = all)
-    --gitignore            Skip files and directories matching .gitignore patterns
+    --include-gitignored   Include files and directories matching .gitignore patterns (default: excluded)
     -h, --help            Show this help message
 
 Arguments:
@@ -59,8 +59,8 @@ while (@ARGV) {
     } elsif ($arg eq '--max-extensions') {
         die "Error: --max-extensions requires a value\n" unless @ARGV;
         $max_extensions = shift @ARGV;
-    } elsif ($arg eq '--gitignore') {
-        $respect_gitignore = 1;
+    } elsif ($arg eq '--include-gitignored') {
+        $respect_gitignore = 0;
     } elsif ($arg =~ /^--/) {
         die "Error: Unknown option '$arg'\n";
     } else {
