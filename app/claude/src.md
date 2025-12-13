@@ -66,15 +66,19 @@ Chat file: $ARGUMENTS
 Please also record the AI's response in the above file and save it as part of the conversation history.
 ```
 
-## suggest-commit-message.md
+## git-commit.md
 
-```markdown suggest-commit-message.md
-Check the staged changes in Git and come up with a commit message.
+```markdown git-commit.md
+Check the staged changes in Git, come up with a commit message, and execute the git commit command with that message.
+
+IMPORTANT: Only execute the `git commit` command. Do NOT execute `git add` or any other git commands that modify the staging area.
+
+IMPORTANT: Do NOT include any Claude attribution messages such as "Generated with Claude" or "Co-Authored-By: Claude" in the commit message.
 ```
 
-## rename-file.md
+## rename.md
 
-```markdown rename-file.md
+```markdown rename.md
 Please rename the file `$ARGUMENTS` to an appropriate filename based on its content. Analyze the file content and suggest a descriptive and meaningful filename that reflects what the file contains or its purpose.
 
 Also examine other files in the same directory and workspace to understand the existing naming conventions and patterns. Consider factors such as:
