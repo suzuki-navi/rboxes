@@ -8,6 +8,7 @@ use Cwd 'abs_path';
 # Global data structures
 my %dir_data;
 my $target_dir;
+my $original_target_dir;  # Store original path format (relative or absolute)
 my $threshold_percent = 25;
 my $respect_gitignore = 0;
 my %gitignore_cache;  # Cache for parsed .gitignore files
@@ -58,6 +59,7 @@ while (@ARGV) {
 }
 
 $target_dir ||= '.';
+$original_target_dir = $target_dir;  # Store original format
 $target_dir = abs_path($target_dir);
 
 die "Error: Directory '$target_dir' does not exist\n" unless -d $target_dir;
@@ -323,14 +325,35 @@ sub identify_large_dirs {
 }
 
 # Format and print output for a directory
+sub convert_to_display_path {
+    my ($abs_path) = @_;
+
+    # Convert absolute path to original format
+    my $original_abs = abs_path($original_target_dir);
+
+    if ($abs_path eq $original_abs) {
+        return $original_target_dir;
+    }
+
+    # Replace the absolute target dir with the original format
+    if ($abs_path =~ /^\Q$original_abs\E(.*)$/) {
+        my $suffix = $1;
+        $suffix =~ s/^\///;  # Remove leading slash
+        return $suffix ? "$original_target_dir/$suffix" : $original_target_dir;
+    }
+
+    # Fallback to absolute path if no match
+    return $abs_path;
+}
+
 sub format_directory_output {
     my ($dir) = @_;
 
     my $data = $dir_data{$dir};
     return unless $data;
 
-    # Print header
-    print "$dir/\n";
+    # Print header with original path format
+    my $display_dir = convert_to_display_path($dir);
 
     # Print total
     my $size_str = format_size($data->{total_size});
@@ -346,7 +369,7 @@ sub format_directory_output {
 
     foreach my $entry (@sorted_entries) {
         my $entry_data = $data->{entries}{$entry};
-        my $full_path = $entry_data->{path};
+        my $full_path = convert_to_display_path($entry_data->{path});
         my $size = format_size($entry_data->{size});
 
         if ($entry_data->{is_dir}) {
