@@ -366,6 +366,15 @@ sub format_directory_output {
     my $total_entries = scalar(@sorted_entries);
     my $is_truncated = ($max_entries > 0 && $total_entries > $max_entries);
 
+    my $max_full_path_length = 0;
+    for (my $i = 0; $i < $entries_to_show; $i++) {
+        my $entry = $sorted_entries[$i];
+        my $entry_data = $data->{entries}{$entry};
+        my $full_path = $entry_data->{path};
+        my $length = length($full_path) + ($entry_data->{is_dir} ? 1 : 0);
+        $max_full_path_length = $length if $length > $max_full_path_length;
+    }
+
     for (my $i = 0; $i < $entries_to_show; $i++) {
         my $entry = $sorted_entries[$i];
         my $entry_data = $data->{entries}{$entry};
@@ -373,10 +382,11 @@ sub format_directory_output {
         my $size = format_size($entry_data->{size});
 
         if ($entry_data->{is_dir}) {
-            printf("        %-50s %10s  %d files\n",
-                   "$full_path/", $size, $entry_data->{count});
+            printf("        %-*s %10s  %d files\n",
+                   $max_full_path_length, "$full_path/", $size, $entry_data->{count});
         } else {
-            printf("        %-50s %10s\n", $full_path, $size);
+            printf("        %-*s %10s\n",
+                    $max_full_path_length, $full_path, $size);
         }
     }
 
