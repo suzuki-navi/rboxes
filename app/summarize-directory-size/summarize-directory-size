@@ -1,0 +1,230 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Find;
+use File::Basename;
+use Cwd 'abs_path';
+
+# Global data structures
+my %dir_data;
+my $target_dir;
+my $threshold_percent = 20;
+
+# Parse arguments
+sub show_help {
+    print <<'EOF';
+Usage: summarize-directory-size [DIRECTORY] [THRESHOLD_PERCENT]
+
+Summarizes directory sizes with recursive breakdown of large subdirectories.
+
+Arguments:
+    DIRECTORY          Directory to analyze (default: current directory)
+    THRESHOLD_PERCENT  Size threshold percentage for expanding subdirectories (default: 20)
+
+Examples:
+    summarize-directory-size
+    summarize-directory-size /path/to/dir
+    summarize-directory-size /path/to/dir 30
+
+The tool will recursively expand subdirectories that are >= THRESHOLD_PERCENT of their parent.
+EOF
+    exit 0;
+}
+
+if (@ARGV && ($ARGV[0] eq '--help' || $ARGV[0] eq '-h')) {
+    show_help();
+}
+
+$target_dir = $ARGV[0] || '.';
+$target_dir = abs_path($target_dir);
+$threshold_percent = $ARGV[1] || 20;
+
+die "Error: Directory '$target_dir' does not exist\n" unless -d $target_dir;
+die "Error: Threshold must be a number between 0 and 100\n"
+    unless $threshold_percent =~ /^\d+$/ && $threshold_percent >= 0 && $threshold_percent <= 100;
+
+# Format size in human-readable format
+sub format_size {
+    my ($bytes) = @_;
+
+    return sprintf("%.0f B", $bytes) if $bytes < 1024;
+    return sprintf("%.1f KB", $bytes/1024) if $bytes < 1024*1024;
+    return sprintf("%.1f MB", $bytes/(1024*1024)) if $bytes < 1024*1024*1024;
+    return sprintf("%.1f GB", $bytes/(1024*1024*1024));
+}
+
+# Scan directory tree and collect size information
+sub scan_directory {
+    my ($dir) = @_;
+
+    my %local_entries;
+    my %local_extensions;
+    my $total_size = 0;
+    my $total_files = 0;
+
+    # Read directory entries
+    opendir(my $dh, $dir) or do {
+        warn "Cannot open directory $dir: $!\n";
+        return (0, 0, {}, {});
+    };
+
+    my @entries = grep { $_ ne '.' && $_ ne '..' } readdir($dh);
+    closedir($dh);
+
+    foreach my $entry (@entries) {
+        my $full_path = "$dir/$entry";
+
+        # Use lstat to avoid following symlinks
+        my @stat = lstat($full_path);
+        unless (@stat) {
+            warn "Cannot stat $full_path: $!\n";
+            next;
+        }
+
+        if (-d _) {
+            # It's a directory - recurse
+            my ($subdir_size, $subdir_files, $subdir_entries, $subdir_exts) =
+                scan_directory($full_path);
+
+            $local_entries{$entry} = {
+                size => $subdir_size,
+                count => $subdir_files,
+                is_dir => 1,
+                path => $full_path
+            };
+
+            $total_size += $subdir_size;
+            $total_files += $subdir_files;
+
+            # Aggregate extension data
+            foreach my $ext (keys %$subdir_exts) {
+                $local_extensions{$ext}{size} += $subdir_exts->{$ext}{size};
+                $local_extensions{$ext}{count} += $subdir_exts->{$ext}{count};
+            }
+        } else {
+            # It's a file
+            my $size = $stat[7];
+
+            $local_entries{$entry} = {
+                size => $size,
+                is_dir => 0,
+                path => $full_path
+            };
+
+            $total_size += $size;
+            $total_files++;
+
+            # Track extension
+            my ($name, $path, $ext) = fileparse($entry, qr/\.[^.]*/);
+            if ($ext) {
+                $local_extensions{$ext}{size} += $size;
+                $local_extensions{$ext}{count}++;
+            }
+        }
+    }
+
+    # Store in global hash
+    $dir_data{$dir} = {
+        total_size => $total_size,
+        file_count => $total_files,
+        entries => \%local_entries,
+        extensions => \%local_extensions
+    };
+
+    return ($total_size, $total_files, \%local_entries, \%local_extensions);
+}
+
+# Identify directories to display based on threshold
+sub identify_large_dirs {
+    my ($dir, $parent_size) = @_;
+
+    my @result = ($dir);  # Always include this directory
+
+    my $data = $dir_data{$dir};
+    return @result unless $data;
+
+    my $threshold = $parent_size * ($threshold_percent / 100);
+
+    # Check each subdirectory
+    foreach my $entry (keys %{$data->{entries}}) {
+        my $entry_data = $data->{entries}{$entry};
+
+        if ($entry_data->{is_dir} && $entry_data->{size} >= $threshold) {
+            # This subdirectory is large enough - recurse
+            my @subdirs = identify_large_dirs($entry_data->{path}, $data->{total_size});
+            push @result, @subdirs;
+        }
+    }
+
+    return @result;
+}
+
+# Format and print output for a directory
+sub format_directory_output {
+    my ($dir) = @_;
+
+    my $data = $dir_data{$dir};
+    return unless $data;
+
+    # Print header
+    print "$dir/\n";
+
+    # Print total
+    my $size_str = format_size($data->{total_size});
+    printf("    Total: %s  %d files\n", $size_str, $data->{file_count});
+
+    # Print entries section
+    print "    Entries:\n";
+
+    # Sort entries by size (largest first)
+    my @sorted_entries = sort {
+        $data->{entries}{$b}{size} <=> $data->{entries}{$a}{size}
+    } keys %{$data->{entries}};
+
+    foreach my $entry (@sorted_entries) {
+        my $entry_data = $data->{entries}{$entry};
+        my $full_path = $entry_data->{path};
+        my $size = format_size($entry_data->{size});
+
+        if ($entry_data->{is_dir}) {
+            printf("        %-50s %10s  %d files\n",
+                   "$full_path/", $size, $entry_data->{count});
+        } else {
+            printf("        %-50s %10s\n", $full_path, $size);
+        }
+    }
+
+    # Print extensions section
+    if (keys %{$data->{extensions}}) {
+        print "    Extensions:\n";
+
+        # Sort extensions by size (largest first)
+        my @sorted_exts = sort {
+            $data->{extensions}{$b}{size} <=> $data->{extensions}{$a}{size}
+        } keys %{$data->{extensions}};
+
+        foreach my $ext (@sorted_exts) {
+            my $ext_data = $data->{extensions}{$ext};
+            my $size = format_size($ext_data->{size});
+            printf("        %-20s %10s  %d files\n",
+                   $ext, $size, $ext_data->{count});
+        }
+    }
+}
+
+# Main execution
+print STDERR "Scanning directory: $target_dir\n";
+scan_directory($target_dir);
+
+print STDERR "Identifying large directories (threshold: ${threshold_percent}%)\n";
+my @dirs_to_display = identify_large_dirs($target_dir, $dir_data{$target_dir}{total_size});
+
+print STDERR "Generating output...\n\n";
+
+# Output results
+foreach my $dir (@dirs_to_display) {
+    format_directory_output($dir);
+    print "\n";  # Blank line between directories
+}
+
+print STDERR "Done. Analyzed " . scalar(@dirs_to_display) . " directories.\n";
