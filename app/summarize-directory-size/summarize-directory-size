@@ -339,7 +339,7 @@ sub identify_large_dirs {
 }
 
 sub format_directory_output {
-    my ($dir) = @_;
+    my ($dir, $root_total_size) = @_;
 
     my $data = $dir_data{$dir};
     return unless $data;
@@ -349,7 +349,8 @@ sub format_directory_output {
 
     # Print total
     my $size_str = format_size($data->{total_size});
-    printf("    Total: %s  %d files\n", $size_str, $data->{file_count});
+    my $total_percent = $root_total_size > 0 ? int(($data->{total_size} / $root_total_size) * 100) : 100;
+    printf("    Total: %s  %3d%%  %d files\n", $size_str, $total_percent, $data->{file_count});
 
     # Print entries section
     print "    Entries:\n";
@@ -380,13 +381,14 @@ sub format_directory_output {
         my $entry_data = $data->{entries}{$entry};
         my $full_path = $entry_data->{path};
         my $size = format_size($entry_data->{size});
+        my $percent = $root_total_size > 0 ? int(($entry_data->{size} / $root_total_size) * 100) : 0;
 
         if ($entry_data->{is_dir}) {
-            printf("        %-*s %10s  %d files\n",
-                   $max_full_path_length, "$full_path/", $size, $entry_data->{count});
+            printf("        %-*s %10s  %3d%%  %d files\n",
+                   $max_full_path_length, "$full_path/", $size, $percent, $entry_data->{count});
         } else {
-            printf("        %-*s %10s\n",
-                    $max_full_path_length, $full_path, $size);
+            printf("        %-*s %10s  %3d%%\n",
+                    $max_full_path_length, $full_path, $size, $percent);
         }
     }
 
@@ -414,8 +416,9 @@ sub format_directory_output {
             my $ext = $sorted_exts[$i];
             my $ext_data = $data->{extensions}{$ext};
             my $size = format_size($ext_data->{size});
-            printf("        %-20s %10s  %d files\n",
-                   $ext, $size, $ext_data->{count});
+            my $percent = $root_total_size > 0 ? int(($ext_data->{size} / $root_total_size) * 100) : 0;
+            printf("        %-20s %10s  %3d%%  %d files\n",
+                   $ext, $size, $percent, $ext_data->{count});
         }
 
         if ($is_ext_truncated) {
@@ -430,7 +433,8 @@ scan_directory($target_dir);
 my @dirs_to_display = identify_large_dirs($target_dir, $dir_data{$target_dir}{total_size});
 
 # Output results
+my $root_total_size = $dir_data{$target_dir}{total_size};
 foreach my $dir (@dirs_to_display) {
-    format_directory_output($dir);
+    format_directory_output($dir, $root_total_size);
     print "\n";  # Blank line between directories
 }
