@@ -71,8 +71,6 @@ while (@ARGV) {
 }
 
 $target_dir ||= '.';
-$original_target_dir = $target_dir;  # Store original format
-$target_dir = abs_path($target_dir);
 
 die "Error: Directory '$target_dir' does not exist\n" unless -d $target_dir;
 die "Error: Threshold must be a number between 0 and 100\n"
@@ -340,28 +338,6 @@ sub identify_large_dirs {
     return @result;
 }
 
-# Format and print output for a directory
-sub convert_to_display_path {
-    my ($abs_path) = @_;
-
-    # Convert absolute path to original format
-    my $original_abs = abs_path($original_target_dir);
-
-    if ($abs_path eq $original_abs) {
-        return $original_target_dir;
-    }
-
-    # Replace the absolute target dir with the original format
-    if ($abs_path =~ /^\Q$original_abs\E(.*)$/) {
-        my $suffix = $1;
-        $suffix =~ s/^\///;  # Remove leading slash
-        return $suffix ? "$original_target_dir/$suffix" : $original_target_dir;
-    }
-
-    # Fallback to absolute path if no match
-    return $abs_path;
-}
-
 sub format_directory_output {
     my ($dir) = @_;
 
@@ -369,7 +345,7 @@ sub format_directory_output {
     return unless $data;
 
     # Print header with original path format
-    my $display_dir = convert_to_display_path($dir);
+    print "$dir/\n";
 
     # Print total
     my $size_str = format_size($data->{total_size});
@@ -393,7 +369,7 @@ sub format_directory_output {
     for (my $i = 0; $i < $entries_to_show; $i++) {
         my $entry = $sorted_entries[$i];
         my $entry_data = $data->{entries}{$entry};
-        my $full_path = convert_to_display_path($entry_data->{path});
+        my $full_path = $entry_data->{path};
         my $size = format_size($entry_data->{size});
 
         if ($entry_data->{is_dir}) {
@@ -439,18 +415,12 @@ sub format_directory_output {
 }
 
 # Main execution
-print STDERR "Scanning directory: $target_dir\n";
 scan_directory($target_dir);
 
-print STDERR "Identifying large directories (threshold: ${threshold_percent}%)\n";
 my @dirs_to_display = identify_large_dirs($target_dir, $dir_data{$target_dir}{total_size});
-
-print STDERR "Generating output...\n\n";
 
 # Output results
 foreach my $dir (@dirs_to_display) {
     format_directory_output($dir);
     print "\n";  # Blank line between directories
 }
-
-print STDERR "Done. Analyzed " . scalar(@dirs_to_display) . " directories.\n";
