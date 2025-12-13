@@ -8,40 +8,171 @@ use Cwd 'abs_path';
 # Global data structures
 my %dir_data;
 my $target_dir;
-my $threshold_percent = 20;
+my $threshold_percent = 25;
+my $respect_gitignore = 0;
+my %gitignore_cache;  # Cache for parsed .gitignore files
 
 # Parse arguments
 sub show_help {
     print <<'EOF';
-Usage: summarize-directory-size [DIRECTORY] [THRESHOLD_PERCENT]
+Usage: summarize-directory-size [OPTIONS] [DIRECTORY]
 
 Summarizes directory sizes with recursive breakdown of large subdirectories.
 
+Options:
+    --threshold-percent N  Size threshold percentage for expanding subdirectories (default: 25)
+    --gitignore            Skip files and directories matching .gitignore patterns
+    -h, --help            Show this help message
+
 Arguments:
-    DIRECTORY          Directory to analyze (default: current directory)
-    THRESHOLD_PERCENT  Size threshold percentage for expanding subdirectories (default: 20)
+    DIRECTORY             Directory to analyze (default: current directory)
 
 Examples:
     summarize-directory-size
     summarize-directory-size /path/to/dir
-    summarize-directory-size /path/to/dir 30
+    summarize-directory-size --threshold-percent 30 /path/to/dir
+    summarize-directory-size /path/to/dir --threshold-percent 10
 
-The tool will recursively expand subdirectories that are >= THRESHOLD_PERCENT of their parent.
+The tool will recursively expand subdirectories that are >= threshold percentage of their parent.
 EOF
     exit 0;
 }
 
-if (@ARGV && ($ARGV[0] eq '--help' || $ARGV[0] eq '-h')) {
-    show_help();
+# Parse options and arguments
+while (@ARGV) {
+    my $arg = shift @ARGV;
+
+    if ($arg eq '--help' || $arg eq '-h') {
+        show_help();
+    } elsif ($arg eq '--threshold-percent') {
+        die "Error: --threshold-percent requires a value\n" unless @ARGV;
+        $threshold_percent = shift @ARGV;
+    } elsif ($arg eq '--gitignore') {
+        $respect_gitignore = 1;
+    } elsif ($arg =~ /^--/) {
+        die "Error: Unknown option '$arg'\n";
+    } else {
+        # It's a positional argument (directory)
+        $target_dir = $arg;
+    }
 }
 
-$target_dir = $ARGV[0] || '.';
+$target_dir ||= '.';
 $target_dir = abs_path($target_dir);
-$threshold_percent = $ARGV[1] || 20;
 
 die "Error: Directory '$target_dir' does not exist\n" unless -d $target_dir;
 die "Error: Threshold must be a number between 0 and 100\n"
     unless $threshold_percent =~ /^\d+$/ && $threshold_percent >= 0 && $threshold_percent <= 100;
+
+# Parse .gitignore file and return array of patterns
+sub parse_gitignore {
+    my ($gitignore_path) = @_;
+
+    return () unless -f $gitignore_path;
+
+    open(my $fh, '<', $gitignore_path) or return ();
+    my @patterns;
+
+    while (my $line = <$fh>) {
+        chomp $line;
+        $line =~ s/^\s+|\s+$//g;  # Trim whitespace
+
+        # Skip empty lines and comments
+        next if $line eq '' || $line =~ /^#/;
+
+        push @patterns, $line;
+    }
+
+    close($fh);
+    return @patterns;
+}
+
+# Convert gitignore pattern to regex
+sub gitignore_to_regex {
+    my ($pattern) = @_;
+
+    my $is_dir_only = ($pattern =~ s/\/$//) ? 1 : 0;
+    my $is_negation = ($pattern =~ s/^!//) ? 1 : 0;
+    my $is_anchored = ($pattern =~ /^\//) ? 1 : 0;
+    $pattern =~ s/^\///;  # Remove leading slash
+
+    # Escape special regex characters except * and ?
+    $pattern =~ s/([.+\[\](){}^$|\\])/\\$1/g;
+
+    # Convert gitignore wildcards to regex
+    $pattern =~ s/\*\*/DOUBLE_STAR/g;
+    $pattern =~ s/\*/[^\/]*/g;
+    $pattern =~ s/DOUBLE_STAR/.*/g;
+    $pattern =~ s/\?/./g;
+
+    return {
+        regex => qr/^$pattern$/,
+        is_dir_only => $is_dir_only,
+        is_negation => $is_negation,
+        is_anchored => $is_anchored,
+        original => $pattern
+    };
+}
+
+# Check if a path matches gitignore patterns
+sub is_gitignored {
+    my ($path, $is_dir) = @_;
+
+    return 0 unless $respect_gitignore;
+
+    # Get relative path from target directory
+    my $rel_path = $path;
+    $rel_path =~ s/^\Q$target_dir\E\/?//;
+
+    return 0 if $rel_path eq '';  # Don't ignore the root directory itself
+
+    # Check all gitignore files in the path hierarchy
+    my @path_parts = split('/', $rel_path);
+    my $current_path = $target_dir;
+    my $ignored = 0;
+
+    for (my $i = 0; $i <= @path_parts; $i++) {
+        my $gitignore_path = "$current_path/.gitignore";
+
+        if (!exists $gitignore_cache{$gitignore_path}) {
+            my @patterns = parse_gitignore($gitignore_path);
+            $gitignore_cache{$gitignore_path} = [map { gitignore_to_regex($_) } @patterns];
+        }
+
+        my @patterns = @{$gitignore_cache{$gitignore_path}};
+
+        # Get the remaining path relative to this gitignore location
+        my $check_path = join('/', @path_parts[$i..$#path_parts]);
+        next if $check_path eq '';
+
+        foreach my $pattern (@patterns) {
+            next if $pattern->{is_dir_only} && !$is_dir;
+
+            my $matched = 0;
+            if ($pattern->{is_anchored}) {
+                # Pattern with leading slash matches from directory root
+                $matched = ($check_path =~ $pattern->{regex});
+            } else {
+                # Pattern without leading slash can match anywhere in path
+                $matched = ($check_path =~ $pattern->{regex});
+                unless ($matched) {
+                    # Also try matching against basename
+                    my $basename = $path_parts[-1] // '';
+                    $matched = ($basename =~ $pattern->{regex});
+                }
+            }
+
+            if ($matched) {
+                $ignored = $pattern->{is_negation} ? 0 : 1;
+            }
+        }
+
+        last if $i >= @path_parts;
+        $current_path .= "/$path_parts[$i]";
+    }
+
+    return $ignored;
+}
 
 # Format size in human-readable format
 sub format_size {
@@ -81,7 +212,19 @@ sub scan_directory {
             next;
         }
 
-        if (-d _) {
+        my $is_directory = (-d _);
+
+        # Check if this entry should be ignored
+        if (is_gitignored($full_path, $is_directory)) {
+            next;
+        }
+
+        # Skip .git directory when gitignore is enabled
+        if ($respect_gitignore && $entry eq '.git' && $is_directory) {
+            next;
+        }
+
+        if ($is_directory) {
             # It's a directory - recurse
             my ($subdir_size, $subdir_files, $subdir_entries, $subdir_exts) =
                 scan_directory($full_path);
