@@ -44,6 +44,8 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         """Add custom headers"""
         self.send_header('Server', 'rboxes-httpserver')
+        self.send_header('Cache-Control', 'max-age=0')
+        self.send_header('Expires', '0')
         super().end_headers()
 
 # Main Application Logic
@@ -92,11 +94,21 @@ show_help() {
     cat $script_dir/help.txt
 }
 
+port=8000
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help)
             show_help
             exit 0
+            ;;
+        --port|-p)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo "Error: --port/-p requires a port number" >&2
+                exit 1
+            fi
+            port="$2"
+            shift 2
             ;;
         -*)
             echo "Error: Unknown option $1" >&2
@@ -114,9 +126,9 @@ set -- "${user_args[@]}"
 
 docker_opts=()
 docker_opts+=("-v" "$pwd:$pwd")
-docker_opts+=("-p" "8000:8000")
+docker_opts+=("-p" "$port:$port")
+docker_opts+=("-e" "PORT=$port")
 
-#$script_dir/rdockrun "${docker_opts[@]}" $script_dir python /app/server.py "$@"
-$script_dir/rdockrun "${docker_opts[@]}" $script_dir bash -c "ls -al; pwd; python /app/server.py $*"
+$script_dir/rdockrun "${docker_opts[@]}" $script_dir python /app/server.py "$@"
 ```
 
