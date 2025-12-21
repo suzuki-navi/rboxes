@@ -28,7 +28,7 @@ from pathlib import Path
 # Configuration Section
 PORT = int(os.getenv('PORT', 8000))
 HOST = os.getenv('HOST', '0.0.0.0')
-SERVE_DIR = os.getenv('SERVE_DIR', '/workdir')
+SERVE_DIR = '.'
 
 # Custom Handler Class
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -81,3 +81,42 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## main.sh
+
+```bash main.sh
+script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+pwd=$(pwd)
+
+show_help() {
+    cat $script_dir/help.txt
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help)
+            show_help
+            exit 0
+            ;;
+        -*)
+            echo "Error: Unknown option $1" >&2
+            show_help >&2
+            exit 1
+            ;;
+        *)
+            user_args+=("$1")
+            shift
+            ;;
+    esac
+done
+
+set -- "${user_args[@]}"
+
+docker_opts=()
+docker_opts+=("-v" "$pwd:$pwd")
+docker_opts+=("-p" "8000:8000")
+
+#$script_dir/rdockrun "${docker_opts[@]}" $script_dir python /app/server.py "$@"
+$script_dir/rdockrun "${docker_opts[@]}" $script_dir bash -c "ls -al; pwd; python /app/server.py $*"
+```
+
