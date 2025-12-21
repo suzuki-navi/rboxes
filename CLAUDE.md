@@ -66,6 +66,7 @@ app/                    # Individual applications
 ├── dailynote/         # Daily note management (Ruby)
 ├── extractmarkdown/   # Extract files from markdown code blocks (Perl)
 ├── hexdumpch/         # Hex dump with character display (Ruby)
+├── httpserver/        # Simple HTTP server for serving directories (Python)
 ├── jq/                # JSON processor wrapper
 ├── ll/                # Enhanced ls command
 └── ...
@@ -79,7 +80,7 @@ var/                   # Runtime data, old versions, and test data
 
 The repository contains three main application patterns:
 
-### Type 1: src.md Pattern (13 applications)
+### Type 1: src.md Pattern (14 applications)
 Applications that define their source in `src.md` files and use the standard build process:
 - **aws**: AWS CLI tools
 - **aws-list-subnets**: AWS subnet listing tool
@@ -91,6 +92,7 @@ Applications that define their source in `src.md` files and use the standard bui
 - **create-bedrock-api-key**: AWS Bedrock API key generator
 - **dailynote**: Daily note management (Ruby)
 - **hexdumpch**: Hex dump with character display (Ruby)
+- **httpserver**: Simple HTTP server for serving directories (Python)
 - **jq**: JSON processor wrapper
 - **markdown2html**: Markdown to HTML converter (Python)
 - **nkf**: Network Kanji Filter

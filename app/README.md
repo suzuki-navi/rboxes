@@ -22,6 +22,9 @@ This directory contains a collection of dockerized command-line utilities. Each 
 #### Utilities
 - **cal** - Calendar utility
 
+#### Web Server
+- **httpserver** - Simple HTTP server for serving directories
+
 #### System & File Management
 - **ll** - Enhanced ls command
 - **summarize-directory-size** - Recursively analyzes and summarizes directory sizes with breakdown of large subdirectories

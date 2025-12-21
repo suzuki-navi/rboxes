@@ -8,9 +8,9 @@ Options:
   --help            Show this help message
 
 Examples:
-  httpserver                    # Serve current directory on port 8000
+  httpserver                    # Serve current directory on port 8080
   httpserver --port 3000        # Serve on port 3000
-  httpserver -p 8080            # Serve on port 8080
+  httpserver -p 9000            # Serve on port 9000
 
 Features:
   - Serves static files over HTTP
