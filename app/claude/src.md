@@ -2,6 +2,7 @@
 
 ```text Dockerfile
 FROM node:24-bookworm
+RUN apt-get update && apt-get install -y docker.io
 RUN npm install -g @anthropic-ai/claude-code@2.0.50
 COPY . /app
 ```
