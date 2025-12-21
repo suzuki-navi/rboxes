@@ -33,6 +33,7 @@ if [[ "$pwd" == "$HOME/"* ]]; then
 fi
 volumes+=("-v" "$RXHOME:$HOME")
 
+rm -rf "$RXHOME/.claude/commands"
 mkdir -p "$RXHOME/.claude/commands"
 for f in "$script_dir/"*.md; do
     cp "$f" "$RXHOME/.claude/commands/"
@@ -61,7 +62,7 @@ fi
 
 ```markdown chat.md
 The following chat file contains recorded conversations between an AI and users. Please write the AI's response that continues this conversation.
-Chat file: $ARGUMENTS
+Chat file: `$ARGUMENTS`
 
 Please also record the AI's response in the above file and save it as part of the conversation history.
 ```
@@ -74,6 +75,39 @@ Check the staged changes in Git, come up with a commit message, and execute the 
 IMPORTANT: Only execute the `git commit` command. Do NOT execute `git add` or any other git commands that modify the staging area.
 
 IMPORTANT: Do NOT include any Claude attribution messages such as "Generated with Claude" or "Co-Authored-By: Claude" in the commit message.
+```
+
+## git-diff.md
+
+```markdown git-diff.md
+Analyze the Git commits in the specified range and summarize the development activities.
+
+Commit range: `$ARGUMENTS`
+
+Please perform the following analysis:
+
+1. Execute `git log` for the specified commit range to retrieve:
+   - Commit messages
+   - Authors
+   - Commit dates
+   - Commit hashes
+
+2. Execute `git diff` for the specified range to examine the actual code changes
+
+3. Provide a comprehensive summary including:
+   - Overview of what was changed
+   - Key features or fixes implemented
+   - Files and components affected
+   - Summary of each developer's contributions
+
+IMPORTANT: Keep the activity summary concise - approximately 5 lines or less per major topic.
+
+Note: The commit range can be specified in various formats:
+- Commit hash range: `c1e92fa..e120009`
+- Relative to HEAD: `HEAD~3..HEAD`
+- Single commit: `HEAD` (will analyze HEAD compared to its parent)
+
+If only a single commit hash or HEAD is provided, analyze that commit compared to its parent commit.
 ```
 
 ## rename.md
