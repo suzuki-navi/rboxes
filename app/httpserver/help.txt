@@ -4,18 +4,13 @@ Usage:
   httpserver [OPTIONS]
 
 Options:
-  --port, -p PORT   Port to listen on (default: 8000)
+  --port, -p PORT   Port to listen on (default: 8080)
   --help            Show this help message
-
-Environment Variables:
-  HOST        Host to bind to (default: 0.0.0.0)
-  SERVE_DIR   Directory to serve (default: current directory)
 
 Examples:
   httpserver                    # Serve current directory on port 8000
   httpserver --port 3000        # Serve on port 3000
   httpserver -p 8080            # Serve on port 8080
-  SERVE_DIR=/data httpserver    # Serve /data directory
 
 Features:
   - Serves static files over HTTP

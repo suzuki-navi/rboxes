@@ -27,7 +27,7 @@ from pathlib import Path
 
 # Configuration Section
 PORT = int(os.getenv('PORT', 8000))
-HOST = os.getenv('HOST', '0.0.0.0')
+HOST = '0.0.0.0'
 SERVE_DIR = '.'
 
 # Custom Handler Class
@@ -94,7 +94,7 @@ show_help() {
     cat $script_dir/help.txt
 }
 
-port=8000
+port=8080
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
