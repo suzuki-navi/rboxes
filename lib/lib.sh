@@ -78,11 +78,46 @@ build_app() {
     local appname
     appname="$(basename "$srcdir")"
 
-    if [ -f "$srcdir/build.sh" ]; then
-        (cd "$srcdir" && bash "./build.sh") || {
-            echo "Build failed" >&2
-            return 1
-        }
+    # ハッシュ計算用のディレクトリを準備
+    local hash_dir="$srcdir/../../lib/build-hash"
+    mkdir -p "$hash_dir"
+
+    local hash_file="$hash_dir/$appname.txt"
+
+    # アプリディレクトリ内のgit管理ファイルのハッシュを計算
+    local current_hash
+    if [ -d "$srcdir/.git" ] || git rev-parse --git-dir > /dev/null 2>&1; then
+        current_hash=$(cd "$srcdir" && git ls-files | LANG=C sort | xargs -r sha256sum 2>/dev/null | sha256sum | awk '{print $1}')
+    else
+        echo "Warning: Not a git repository, building without hash check" >&2
+        current_hash=""
+    fi
+
+    # 前回のハッシュ値を読み込み
+    local previous_hash=""
+    if [ -f "$hash_file" ]; then
+        previous_hash=$(cat "$hash_file")
+    fi
+
+    # ハッシュが一致する場合はビルドをスキップ
+    if [ -n "$current_hash" ] && [ "$current_hash" = "$previous_hash" ] && [ -f "$srcdir/$appname" ]; then
+        echo "Skipping build for $appname (no changes detected)"
+    else
+        # ビルド実行
+        if [ -f "$srcdir/build.sh" ]; then
+            echo "Building $appname..."
+            (cd "$srcdir" && bash "./build.sh") || {
+                echo "Build failed" >&2
+                return 1
+            }
+        else
+            echo "No build.sh found in $srcdir, skipping build" >&2
+        fi
+    fi
+
+    # ビルド成功時にハッシュを保存
+    if [ -n "$current_hash" ]; then
+        echo "$current_hash" > "$hash_file"
     fi
 
     if [ -n "$dstdir" ]; then
