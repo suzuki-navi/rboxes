@@ -69,6 +69,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$source_path" ]]; then
+    echo "Error: No input file specified" >&2
+    show_help >&2
+    exit 1
+fi
+
 export LC_ALL=C.UTF-8
 
 temp_dir=$(mktemp -d)
