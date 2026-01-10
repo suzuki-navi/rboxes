@@ -1,0 +1,127 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use File::Path qw(make_path);
+use File::Basename;
+use Getopt::Long;
+use Digest::MD5 qw(md5_hex);
+
+# Help message function
+sub show_help {
+    my $exit_code = shift || 0;
+    print STDERR <<"END_HELP";
+Usage: $0 [options] <markdown_file>
+
+Options:
+    -d, --directory <dir>    Output directory for extracted files (required unless --list is used)
+    -l, --list               List files only, don't extract them
+    -f, --force              Force overwrite of existing files
+    -v, --verbose            Show additional information during processing
+    -h, --help               Show this help message
+
+Description:
+    Extracts code blocks from markdown files and saves them as individual files,
+    or lists the files that would be extracted without extracting them.
+    The code blocks should have the format: ```language filepath
+
+Examples:
+    $0 --directory ./output project_overview.md
+    $0 --list project_overview.md
+END_HELP
+
+    exit $exit_code;
+}
+
+# Parse command line arguments
+my $output_dir;
+my $help = 0;
+my $list_only = 0;
+my $force = 0;
+my $verbose = 0;
+
+GetOptions(
+    'directory|d=s' => \$output_dir,
+    'help|h'        => \$help,
+    'list|l'        => \$list_only,
+    'force|f'       => \$force,
+    'verbose|v'     => \$verbose,
+) or show_help(1);
+
+show_help(0) if $help;
+
+if (@ARGV != 1) {
+    print STDERR "Error: Please provide exactly one markdown file as input.\n\n";
+    show_help(1);
+}
+
+if (!defined $output_dir && !$list_only) {
+    print STDERR "Error: Output directory must be specified with -d or --directory option when not in list-only mode.\n\n";
+    show_help(1);
+}
+
+my $input_file = $ARGV[0];
+
+die "Error: Input file '$input_file' does not exist\n" unless -f $input_file;
+
+open my $fh, '<', $input_file or die "Cannot open '$input_file': $!\n";
+
+my $content = do { local $/; <$fh> };
+close $fh;
+
+# Variable to track if we've encountered any errors
+my $has_errors = 0;
+
+while ($content =~ /^(`{3,})(?:(\w+)[ \t]+)?([^\r\n\t\f\v]+?)[ \t]*\n(.*?\n)\1\s*$/gms) {
+    my ($backticks, $language, $filepath, $file_content) = ($1, $2, $3, $4);
+    
+    next unless defined $filepath && $filepath ne '';
+    
+    if ($list_only) {
+        print "$filepath\n";
+    } else {
+        my $output_path = "$output_dir/$filepath";
+        
+        my $dir = dirname($output_path);
+        make_path($dir) unless -d $dir;
+        
+        # Check if file already exists
+        if (-e $output_path) {
+            if (!$force) {
+                print STDERR "Error: File '$output_path' already exists. Use --force to overwrite.\n";
+                $has_errors = 1;
+                next;
+            } else {
+                # File exists and force is enabled - check if content is the same
+                if (compare_file_content($output_path, $file_content)) {
+                    print "Skipped (unchanged): $filepath\n" if $verbose;
+                    next;
+                }
+            }
+        }
+        
+        open my $out_fh, '>', $output_path or do {
+            print STDERR "Cannot create '$output_path': $!\n";
+            $has_errors = 1;
+            next;
+        };
+        
+        print $out_fh $file_content;
+        close $out_fh;
+        
+        print "Extracted: $filepath\n" if $verbose;
+    }
+}
+
+# Function to compare file content
+sub compare_file_content {
+    my ($file_path, $new_content) = @_;
+    
+    open my $fh, '<', $file_path or return 0;
+    my $existing_content = do { local $/; <$fh> };
+    close $fh;
+    
+    return ($existing_content eq $new_content);
+}
+
+# Exit with error status if any errors were encountered
+exit 1 if $has_errors;
