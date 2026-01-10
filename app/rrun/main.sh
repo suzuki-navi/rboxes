@@ -5,10 +5,11 @@ script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 pwd=$(pwd)
 
 CONFIG_MD_FILE_NAME="rrun.md"
+PROFILE_MD_FILE_NAME="rrun.profile.md"
 
 # Find the config markdown file in current or parent directories
 config_md_file_path=""
-env_file_path=""
+profile_md_file_path=""
 current_dir="$pwd"
 while [ "$current_dir" != "/" ]; do
     if [ -f "$current_dir/$CONFIG_MD_FILE_NAME" ]; then
@@ -23,8 +24,8 @@ if [ -z "$config_md_file_path" ]; then
     exit 1
 fi
 
-if [ -f "$(dirname "$config_md_file_path")/rrun.env" ]; then
-    env_file_path="$(dirname "$config_md_file_path")/rrun.env"
+if [ -f "$(dirname "$config_md_file_path")/$PROFILE_MD_FILE_NAME" ]; then
+    profile_md_file_path="$(dirname "$config_md_file_path")/$PROFILE_MD_FILE_NAME"
 fi
 
 mount_home_dir_path="$(dirname "$config_md_file_path")/.rrun.home"
@@ -37,6 +38,10 @@ trap cleanup EXIT
 
 $script_dir/extractmarkdown -d "$tmpctx" "$config_md_file_path"
 
+if [ -n "$profile_md_file_path" ]; then
+    $script_dir/extractmarkdown --force -d "$tmpctx" "$profile_md_file_path"
+fi
+
 RDOCKRUN_OPTIONS="--pwd -v $tmpctx:$tmpctx -v $mount_home_dir_path:$HOME"
 
 if [ -f "$tmpctx/RDOCKRUN_ENV" ]; then
@@ -48,10 +53,6 @@ if [ -f "$tmpctx/RDOCKRUN_ENV" ]; then
         echo "$RDOCKRUN_OPTIONS"
     )
     RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS $additional_options"
-fi
-
-if [ -n "$env_file_path" ]; then
-    RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS --envfile $env_file_path"
 fi
 
 $script_dir/rdockrun $RDOCKRUN_OPTIONS "$tmpctx" "$@"
