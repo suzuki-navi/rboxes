@@ -14,14 +14,18 @@ build_app ../rselfpack
 smart_cp ../rselfpack/rselfpack ./var/etc/rselfpack
 
 mkdir -p ./var/src
+mkdir -p ./var/src/rboxes
 
 smart_cp ./main.sh ./var/src/main.sh
 
-build_app ../extractmarkdown
-smart_cp ../extractmarkdown/extractmarkdown ./var/src/extractmarkdown
-
-build_app ../rdockrun
-smart_cp ../rdockrun/rdockrun ./var/src/rdockrun
+for sub_app in \
+        extractmarkdown rdockrun \
+        gita gitb gitf gitl gits \
+        ll \
+    ; do
+    build_app ../$sub_app
+    smart_cp ../$sub_app/$sub_app ./var/src/rboxes/$sub_app
+done
 
 ./var/etc/rselfpack -x --compress ./var/src -o ./$app_name.tmp
 smart_mv ./$app_name.tmp ./$app_name

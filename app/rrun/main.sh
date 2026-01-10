@@ -36,13 +36,14 @@ tmpctx="$(mktemp -d $HOME/.rrun/cache/XXXXXX)"
 cleanup() { rm -rf "$tmpctx"; }
 trap cleanup EXIT
 
-$script_dir/extractmarkdown -d "$tmpctx" "$config_md_file_path"
+$script_dir/rboxes/extractmarkdown -d "$tmpctx" "$config_md_file_path"
 
 if [ -n "$profile_md_file_path" ]; then
-    $script_dir/extractmarkdown --force -d "$tmpctx" "$profile_md_file_path"
+    $script_dir/rboxes/extractmarkdown --force -d "$tmpctx" "$profile_md_file_path"
 fi
 
 RDOCKRUN_OPTIONS="--pwd -v $tmpctx:$tmpctx -v $mount_home_dir_path:$HOME"
+RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS -e RBOXES_PATH=$script_dir/rboxes -v $script_dir/rboxes:$script_dir/rboxes"
 
 if [ -f "$tmpctx/RDOCKRUN_ENV" ]; then
     RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS --envfile $tmpctx/RDOCKRUN_ENV"
@@ -55,4 +56,4 @@ if [ -f "$tmpctx/RDOCKRUN_ENV" ]; then
     RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS $additional_options"
 fi
 
-$script_dir/rdockrun $RDOCKRUN_OPTIONS "$tmpctx" "$@"
+$script_dir/rboxes/rdockrun $RDOCKRUN_OPTIONS "$tmpctx" "$@"
