@@ -20,8 +20,6 @@ smart_cp ./main.sh ./var/src/main.sh
 
 for sub_app in \
         extractmarkdown rdockrun \
-        gita gitb gitf gitl gits \
-        ll \
     ; do
     build_app ../$sub_app
     smart_cp ../$sub_app/$sub_app ./var/src/rboxes/$sub_app

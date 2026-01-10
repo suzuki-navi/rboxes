@@ -4,7 +4,6 @@ use warnings;
 use File::Path qw(make_path);
 use File::Basename;
 use Getopt::Long;
-use Digest::MD5 qw(md5_hex);
 
 # Help message function
 sub show_help {
