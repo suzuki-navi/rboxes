@@ -1,0 +1,215 @@
+#!/bin/bash
+
+# rdockrun: Build-on-the-fly and run docker images from a Dockerfile or directory.
+# Usage:
+#   rdockrun [--debug] [--help] [--envfile FILEPATH] [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+# Examples:
+#   rdockrun Dockerfile ls
+#   rdockrun -v "$(pwd):$(pwd)" foo/ ls -la
+#   rdockrun --debug Dockerfile ls
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE' >&2
+Usage:
+  rdockrun [--pwd] [--debug] [--help] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+
+Options:
+  --pwd            Mount current directory as -v $(pwd):$(pwd)
+  --debug          Enable debug output
+  --help           Show this help message and exit
+  --envfile PATH   Source environment variables from specified file
+  -e VAR[=VALUE]   Set environment variable (can be used multiple times)
+
+Notes:
+  - Only -r, -v, -p, -e, --pwd, --envfile, --help and --debug options are accepted.
+  - The first non-option argument must be a file or a directory.
+  - If a file is given, it is treated as a Dockerfile.
+  - If a directory is given, all its contents are copied as the build context.
+  - Image name is derived from a hash of the *contents* of the build context.
+USAGE
+}
+
+err() { echo "ERROR: $*" >&2; exit 1; }
+
+# ---- parse options until we hit the path ----
+run_opts=()
+debug=false
+custom_entrypoint=true
+envfile=""
+mount_pwd=false
+while (( $# )); do
+    case "${1:-}" in
+        -v|-p|-e)
+            (( $# >= 2 )) || err "Option $1 requires an argument"
+            run_opts+=("$1" "$2")
+            shift 2
+            ;;
+        --pwd)
+            mount_pwd=true
+            shift
+            ;;
+        --debug)
+            debug=true
+            shift
+            ;;
+        --envfile)
+            (( $# >= 2 )) || err "Option $1 requires an argument"
+            envfile="$2"
+            shift 2
+            ;;
+        --help)
+            usage
+            exit 0
+            ;;
+        --) shift; break ;;
+        -*) err "Unsupported option: $1 (only -r, --pwd, -v, -p, -e, --envfile, --help and --debug are allowed)" ;;
+        *) break ;;
+    esac
+done
+
+(( $# >= 1 )) || { usage; exit 2; }
+path="$1"; shift
+
+# Validate path
+[[ -e "$path" ]] || err "No such file or directory: $path"
+
+# Create temp build context
+mkdir -p "$HOME/.rdockrun/cache"
+tmpctx="$(mktemp -d $HOME/.rdockrun/cache/XXXXXX)"
+cleanup() { rm -rf "$tmpctx"; }
+trap cleanup EXIT
+
+# Populate build context
+if [[ -f "$path" ]]; then
+    # Treat as Dockerfile
+    cp -- "$path" "$tmpctx/Dockerfile"
+elif [[ -d "$path" ]]; then
+    # Copy directory contents (including dotfiles) into context
+    # Using tar to preserve dotfiles and avoid needing rsync.
+    ( cd "$path" && tar -cf - . ) | tar -xf - -C "$tmpctx" 
+else
+    err "Path is neither a regular file nor a directory: $path"
+fi
+if [[ ! -f "$tmpctx/Dockerfile" ]]; then
+    err "No Dockerfile found in the specified path: $path"
+fi
+# Copy the entrypoint script to the build context
+cat <<'EOF' > "$tmpctx/.entrypoint.sh"
+input_file="$1"
+shift
+if [ -e /envfile ]; then
+    set -a
+    . /envfile
+    set +a
+fi
+if [ -n "$input_file" ]; then
+    exec 0< "$input_file"
+fi
+chown -R "$APP_UID:$APP_GID" $HOME
+EOF
+
+cat <<'EOF' >> "$tmpctx/.entrypoint.sh"
+if command -v su-exec >/dev/null 2>&1; then
+    DROP_CMD="su-exec"
+elif command -v gosu >/dev/null 2>&1; then
+    DROP_CMD="gosu"
+else
+    echo "ERROR: gosu or su-exec not found" >&2
+    exit 1
+fi
+useradd -u $APP_UID -m -d $HOME user 2>/dev/null
+EOF
+
+if [[ -e "$tmpctx/entry.sh" ]]; then
+    cat <<'EOF' >> "$tmpctx/.entrypoint.sh"
+exec "$DROP_CMD" "$APP_UID:$APP_GID" bash /entry.sh "$@"
+EOF
+else
+    cat <<'EOF' >> "$tmpctx/.entrypoint.sh"
+exec "$DROP_CMD" "$APP_UID:$APP_GID" "$@"
+EOF
+fi
+
+# Add ENTRYPOINT in the Dockerfile
+(
+    echo "COPY .entrypoint.sh /entrypoint.sh"
+    if [[ -e "$tmpctx/entry.sh" ]]; then
+        echo "COPY entry.sh /entry.sh"
+    fi
+    echo "ENTRYPOINT [\"/bin/bash\", \"/entrypoint.sh\"]"
+) >> "$tmpctx/Dockerfile"
+
+# Compute a content hash of the build context (order-independent)
+# Fallback-friendly approach that avoids relying on GNU tar --sort.
+hash_val="$(
+    cd "$tmpctx"
+    # List files deterministically, hash each file's content, then hash the list.
+    # If there are no files (unlikely), echo a constant to avoid empty pipeline issues.
+    if find . -type f -print0 | grep -q .; then
+        find . -type f -print0 \
+            | LC_ALL=C sort -z \
+            | xargs -0 sha256sum
+    else
+        echo -n "empty"
+    fi | sha256sum | awk '{print $1}'
+)"
+hash_val="${hash_val:0:16}"
+
+# Derive image name from hash (tag-friendly)
+imagename="rdockrun:$hash_val"
+
+# Build only if the image does not already exist
+if ! docker image inspect "$imagename" >/dev/null 2>&1; then
+    if $debug; then
+        echo "Building image $imagename ..."
+    fi
+
+    docker build -t "$imagename" "$tmpctx" >&2
+else
+    if $debug; then
+        echo "Image $imagename already exists; skipping build."
+    fi
+fi
+
+pwd=$(pwd)
+temp_input_file=""
+
+run_opts2=()
+uid=$(id -u)
+gid=$(id -g)
+#run_opts2+=("--user" "${uid}:${gid}")
+run_opts2+=("-e" "APP_UID=${uid}")
+run_opts2+=("-e" "APP_GID=${gid}")
+run_opts2+=("-w" "$pwd")
+run_opts2+=("-e" "HOME=$HOME")
+if [[ -n "${TZ:-}" ]]; then
+    run_opts2+=("-e" "TZ=$TZ")
+fi
+if [ -t 0 ]; then
+    run_opts2+=("-i")
+else
+    temp_input_file="$tmpctx/.rdockrun-input"
+fi
+if [ -t 1 ]; then
+    run_opts2+=("-t")
+fi
+if [[ -n "$envfile" ]] && [[ -f "$envfile" ]]; then
+    run_opts2+=("-v" "$envfile:/envfile")
+fi
+if [[ -n "$temp_input_file" ]]; then
+    run_opts2+=("-v" "$temp_input_file:$temp_input_file")
+    cat > "$temp_input_file"
+fi
+if $mount_pwd; then
+    run_opts2+=("-v" "$pwd:$pwd")
+fi
+run_opts2+=("-v" "/var/run/docker.sock:/var/run/docker.sock")
+
+cmd=("$@")
+
+# Run the container with the specified command or default shell
+if $debug; then
+    echo docker run --rm "${run_opts2[@]}" "${run_opts[@]}" "$imagename" "$temp_input_file" "${cmd[@]:-sh}"
+fi
+docker run --rm "${run_opts2[@]}" "${run_opts[@]}" "$imagename" "$temp_input_file" "${cmd[@]:-sh}"
