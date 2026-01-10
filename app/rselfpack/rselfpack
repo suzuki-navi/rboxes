@@ -7,7 +7,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 use MIME::Base64 qw(encode_base64);
 use Getopt::Long qw(GetOptions);
-use IO::Compress::Gzip;
+use IPC::Open2 qw(open2);
 
 # ------------------------------
 # Help message function
@@ -415,14 +415,20 @@ for my $path (@files) {
 my $payload_hash = substr(sha256_hex($payload), 0, 8);
 
 if ($use_compress) {
-    # gzip + base64 (using system gzip for compatibility/simplicity)
-    # If you prefer pure-Perl, you could use IO::Compress::Gzip.
+    # gzip + base64 using system gzip command via IPC::Open2
+    my ($gzip_out, $gzip_in);
+    my $pid = open2($gzip_out, $gzip_in, 'gzip', '-n', '-c');
+    binmode($gzip_in, ':raw');
+    binmode($gzip_out, ':raw');
+    print $gzip_in $payload;
+    close($gzip_in);
     my $gz;
-    IO::Compress::Gzip::gzip(\$payload => \$gz, 
-        Time => 0,      # Set timestamp to 0 for deterministic output
-        Name => '',     # Don't include original filename
-        Comment => ''   # Don't include comment
-    ) or die "Error compressing payload: $!";
+    {
+        local $/ = undef;
+        $gz = <$gzip_out>;
+    }
+    close($gzip_out);
+    waitpid($pid, 0);
 
     my $b64 = encode_base64($gz, "");
     $b64 =~ s/(.{1,76})/$1\n/gs;
