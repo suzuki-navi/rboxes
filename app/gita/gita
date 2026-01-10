@@ -1,0 +1,32 @@
+#!/bin/bash
+
+show_help() {
+    cat << EOF
+Usage: gita [options] [path...]
+
+Add all changes to git staging area (-A option).
+
+Options:
+  --help                 display this help message
+
+Arguments:
+  [path...]              one or more paths to restrict the operation to (optional)
+EOF
+}
+
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+# Run git add with -A option
+git add -A "$@"

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+branch=$1
+shift
+
+if [[ "$branch" =~ '..' ]]; then
+    branch2="$branch"
+else
+    branch2="$branch~..$branch"
+fi
+
+if [ -t 1 ]; then
+    (
+        if [ "$branch" != "$branch2" ]; then
+            git log -1 --pretty=format:"%Cblue%d %Cgreen%ai %Cblue%ae %Cgreen%h %Creset%s" "$branch"
+            echo
+        fi
+        git diff --color --name-status "$branch2"
+        git diff --color --stat "$branch2"
+        git diff --color "$branch2" "$@"
+    ) | less -X -R -S
+else
+    if [ "$branch" != "$branch2" ]; then
+        git log -1 --pretty=format:"%d %ai %ae %h %s" "$branch"
+        echo
+    fi
+    git diff --no-color --name-status "$branch2"
+    git diff --no-color --stat "$branch2"
+    git diff --no-color "$branch2" "$@"
+fi

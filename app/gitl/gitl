@@ -1,0 +1,55 @@
+#!/bin/bash
+
+show_help() {
+    cat << EOF
+Usage: gitl [options] [commit-ish...]
+
+Display git log in graph format with pretty formatting.
+If no arguments are provided, shows log for all branches, tags, and remotes.
+
+Options:
+  --help                 display this help message
+
+Arguments:
+  [commit-ish...]        Git references to show logs for (optional)
+EOF
+}
+
+# Parse command line options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help)
+            show_help
+            exit 0
+            ;;
+        -*)
+            if [ "$1" == "--" ]; then
+                shift
+                break
+            fi
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -t 1 ]; then
+    if [ $# -gt 0 ]; then
+        git log --graph --date-order \
+            --pretty=format:"%Cgreen%ai %Cblue%an %Cgreen%h %Cblue%d %Creset%s" "$@"
+    else
+        git log --graph --date-order --branches --tags --remotes HEAD \
+            --pretty=format:"%Cgreen%ai %Cblue%an %Cgreen%h %Cblue%d %Creset%s"
+    fi
+else
+    if [ $# -gt 0 ]; then
+        git log --graph --date-order \
+            --pretty=format:"%ai %an %h %d %s" "$@"
+    else
+        git log --graph --date-order --branches --tags --remotes HEAD \
+            --pretty=format:"%ai %an %h %d %s"
+    fi
+fi
+
