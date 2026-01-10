@@ -8,6 +8,7 @@ CONFIG_MD_FILE_NAME="rrun.md"
 
 # Find the config markdown file in current or parent directories
 config_md_file_path=""
+env_file_path=""
 current_dir="$pwd"
 while [ "$current_dir" != "/" ]; do
     if [ -f "$current_dir/$CONFIG_MD_FILE_NAME" ]; then
@@ -22,7 +23,11 @@ if [ -z "$config_md_file_path" ]; then
     exit 1
 fi
 
-mount_home_dir_path=$(dirname "$config_md_file_path")/.rrun.home
+if [ -f "$(dirname "$config_md_file_path")/rrun.env" ]; then
+    env_file_path="$(dirname "$config_md_file_path")/rrun.env"
+fi
+
+mount_home_dir_path="$(dirname "$config_md_file_path")/.rrun.home"
 mkdir -p "$mount_home_dir_path"
 
 mkdir -p "$HOME/.rrun/cache"
@@ -43,6 +48,10 @@ if [ -f "$tmpctx/RDOCKRUN_ENV" ]; then
         echo "$RDOCKRUN_OPTIONS"
     )
     RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS $additional_options"
+fi
+
+if [ -n "$env_file_path" ]; then
+    RDOCKRUN_OPTIONS="$RDOCKRUN_OPTIONS --envfile $env_file_path"
 fi
 
 $script_dir/rdockrun $RDOCKRUN_OPTIONS "$tmpctx" "$@"

@@ -12,13 +12,13 @@ set -euo pipefail
 usage() {
     cat <<'USAGE' >&2
 Usage:
-  rdockrun [--pwd] [--debug] [--help] [--envfile FILEPATH] [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
+  rdockrun [--pwd] [--debug] [--help] [--envfile FILEPATH]... [-e VAR[=VALUE]]... [-v HOST:CONT[:MODE]]... [-p HOSTPORT:CONTPORT]... <Dockerfile|DIR> [CMD...]
 
 Options:
   --pwd            Mount current directory as -v $(pwd):$(pwd)
   --debug          Enable debug output
   --help           Show this help message and exit
-  --envfile PATH   Source environment variables from specified file
+  --envfile PATH   Source environment variables from specified file (can be used multiple times)
   -e VAR[=VALUE]   Set environment variable (can be used multiple times)
 
 Notes:
@@ -36,7 +36,7 @@ err() { echo "ERROR: $*" >&2; exit 1; }
 run_opts=()
 debug=false
 custom_entrypoint=true
-envfile=""
+envfiles=()
 mount_pwd=false
 while (( $# )); do
     case "${1:-}" in
@@ -55,7 +55,7 @@ while (( $# )); do
             ;;
         --envfile)
             (( $# >= 2 )) || err "Option $1 requires an argument"
-            envfile="$2"
+            envfiles+=("$2")
             shift 2
             ;;
         --help)
@@ -98,11 +98,13 @@ fi
 cat <<'EOF' > "$tmpctx/.entrypoint.sh"
 input_file="$1"
 shift
-if [ -e /envfile ]; then
-    set -a
-    . /envfile
-    set +a
-fi
+for envfile in /envfile.*; do
+    if [ -e "$envfile" ]; then
+        set -a
+        . "$envfile"
+        set +a
+    fi
+done
 if [ -n "$input_file" ]; then
     exec 0< "$input_file"
 fi
@@ -194,9 +196,14 @@ fi
 if [ -t 1 ]; then
     run_opts2+=("-t")
 fi
-if [[ -n "$envfile" ]] && [[ -f "$envfile" ]]; then
-    run_opts2+=("-v" "$envfile:/envfile")
-fi
+for i in "${!envfiles[@]}"; do
+    envfile="${envfiles[$i]}"
+    if [[ -f "$envfile" ]]; then
+        run_opts2+=("-v" "$envfile:/envfile.$i")
+    else
+        err "Envfile not found: $envfile"
+    fi
+done
 if [[ -n "$temp_input_file" ]]; then
     run_opts2+=("-v" "$temp_input_file:$temp_input_file")
     cat > "$temp_input_file"
